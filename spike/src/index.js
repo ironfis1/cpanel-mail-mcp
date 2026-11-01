@@ -7,6 +7,26 @@
 // mode "full": login, LIST, SELECT, SEARCH, FETCH, APPEND draft, STORE flag (test mailbox only).
 // mode "list": login and LIST only. Read-only. Safe for live mailboxes.
 import { ImapFlow } from "imapflow";
+import { connect } from "cloudflare:sockets";
+
+const withTimeout = (p, ms, what) =>
+  Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(`timeout after ${ms}ms: ${what}`)), ms))]);
+
+// Raw TLS probe with Cloudflare's native socket API, independent of imapflow.
+// Pass: we read the server's IMAP greeting ("* OK ...").
+async function probe(host, port = 993) {
+  const sock = connect({ hostname: host, port }, { secureTransport: "on", allowHalfOpen: false });
+  try {
+    await withTimeout(sock.opened, 10000, "TCP/TLS open");
+    const reader = sock.readable.getReader();
+    const { value } = await withTimeout(reader.read(), 10000, "IMAP greeting");
+    const greeting = new TextDecoder().decode(value || new Uint8Array()).trim().slice(0, 120);
+    reader.releaseLock();
+    return { greeting };
+  } finally {
+    try { await sock.close(); } catch {}
+  }
+}
 
 const json = (o, s = 200) =>
   new Response(JSON.stringify(o, null, 2), { status: s, headers: { "content-type": "application/json" } });
@@ -49,8 +69,13 @@ async function runAccount(acct, opts) {
     auth: { user: acct.id, pass: acct.pass },
     logger: false,
     disableAutoIdle: true,
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 30000,
   });
   try {
+    await step(log, "raw TLS probe (cloudflare:sockets)", () => probe(acct.host));
+    if (opts.probeOnly) return { id: acct.id, mode: "probe", ok: true, log };
     await step(log, "connect+login", () => client.connect().then(() => ({ capabilities: [...client.capabilities.keys()] })));
     const folders = await step(log, "list", async () =>
       (await client.list()).map((f) => ({ path: f.path, specialUse: f.specialUse || null, delimiter: f.delimiter }))
@@ -110,9 +135,11 @@ export default {
       const missing = ["TEST_HOST", "TEST_USER", "TEST_PASS"].filter((k) => !env[k]);
       return json({ error: `missing secrets: ${missing.join(", ")}` }, 500);
     }
-    const opts = { flag: url.searchParams.get("flag") === "1" };
+    const opts = { flag: url.searchParams.get("flag") === "1", probeOnly: url.searchParams.get("probe") === "1" };
     const t = Date.now();
-    const results = await Promise.all(accounts.map((a) => runAccount(a, opts)));
+    const results = await Promise.all(accounts.map((a) =>
+      withTimeout(runAccount(a, opts), 50000, "whole account run").catch((e) => ({ id: a.id, ok: false, error: String(e.message || e) }))
+    ));
     return json({ runtime: "cloudflare-workers", totalMs: Date.now() - t, results });
   },
 };
