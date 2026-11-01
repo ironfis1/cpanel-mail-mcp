@@ -1,6 +1,7 @@
 // Feasibility spike: does imapflow run on Cloudflare Workers against cPanel?
 // Design ref: docs/design.md section 10.
-// Accounts come from the ACCOUNTS_JSON secret:
+// Test account comes from three plain secrets: TEST_HOST, TEST_USER, TEST_PASS.
+// (Earlier ACCOUNTS_JSON format, kept for reference:)
 //   [{"id":"mcptest@reasinger.net","host":"mail.example.com","pass":"...","mode":"full"},
 //    {"id":"scott@reasinger.net","host":"...","pass":"...","mode":"list"}]
 // mode "full": login, LIST, SELECT, SEARCH, FETCH, APPEND draft, STORE flag (test mailbox only).
@@ -102,7 +103,13 @@ export default {
     if (url.pathname !== "/spike") return json({ error: "not found" }, 404);
     if (req.headers.get("authorization") !== `Bearer ${env.SPIKE_TOKEN}`) return json({ error: "unauthorized" }, 401);
     let accounts;
-    try { accounts = JSON.parse(env.ACCOUNTS_JSON); } catch { return json({ error: "ACCOUNTS_JSON secret missing or invalid" }, 500); }
+    if (env.TEST_HOST && env.TEST_USER && env.TEST_PASS) {
+      // Plain per-value secrets: no JSON, no escaping.
+      accounts = [{ id: env.TEST_USER.trim(), host: env.TEST_HOST.trim(), pass: env.TEST_PASS, mode: "full" }];
+    } else {
+      const missing = ["TEST_HOST", "TEST_USER", "TEST_PASS"].filter((k) => !env[k]);
+      return json({ error: `missing secrets: ${missing.join(", ")}` }, 500);
+    }
     const opts = { flag: url.searchParams.get("flag") === "1" };
     const t = Date.now();
     const results = await Promise.all(accounts.map((a) => runAccount(a, opts)));
