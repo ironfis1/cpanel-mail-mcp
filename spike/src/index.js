@@ -1,4 +1,5 @@
-// Feasibility spike: does imapflow run on Cloudflare Workers against cPanel?
+// Feasibility spike: IMAP from Cloudflare Workers to cPanel.
+// Run 2 showed imapflow times out on Workers; this uses the native-socket client in imap.js.
 // Design ref: docs/design.md section 10.
 // Test account comes from three plain secrets: TEST_HOST, TEST_USER, TEST_PASS.
 // (Earlier ACCOUNTS_JSON format, kept for reference:)
@@ -6,7 +7,7 @@
 //    {"id":"scott@reasinger.net","host":"...","pass":"...","mode":"list"}]
 // mode "full": login, LIST, SELECT, SEARCH, FETCH, APPEND draft, STORE flag (test mailbox only).
 // mode "list": login and LIST only. Read-only. Safe for live mailboxes.
-import { ImapFlow } from "imapflow";
+import { Imap, imapDate } from "./imap.js";
 import { connect } from "cloudflare:sockets";
 
 const withTimeout = (p, ms, what) =>
@@ -60,65 +61,56 @@ function draftMime({ from, to, subject, body, inReplyTo, references }) {
   return lines.join("\r\n") + "\r\n\r\n" + body + "\r\n";
 }
 
+// Strip display name: "Name <a@b>" -> "a@b"
+const addr = (h) => (h || "").match(/<([^>]+)>/)?.[1] || (h || "").trim() || null;
+
 async function runAccount(acct, opts) {
   const log = [];
-  const client = new ImapFlow({
-    host: acct.host,
-    port: 993,
-    secure: true,
-    auth: { user: acct.id, pass: acct.pass },
-    logger: false,
-    disableAutoIdle: true,
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 30000,
-  });
+  await step(log, "raw TLS probe (cloudflare:sockets)", () => probe(acct.host)).catch(() => null);
+  if (!log[0].ok) return { id: acct.id, mode: acct.mode, ok: false, log };
+  if (opts.probeOnly) return { id: acct.id, mode: "probe", ok: true, log };
+
+  const sock = connect({ hostname: acct.host, port: 993 }, { secureTransport: "on", allowHalfOpen: false });
+  const c = new Imap(sock, { timeoutMs: 15000 });
   try {
-    await step(log, "raw TLS probe (cloudflare:sockets)", () => probe(acct.host));
-    if (opts.probeOnly) return { id: acct.id, mode: "probe", ok: true, log };
-    await step(log, "connect+login", () => client.connect().then(() => ({ capabilities: [...client.capabilities.keys()] })));
-    const folders = await step(log, "list", async () =>
-      (await client.list()).map((f) => ({ path: f.path, specialUse: f.specialUse || null, delimiter: f.delimiter }))
-    );
+    await step(log, "greeting", () => c.greeting().then((g) => ({ literalPlus: c.literalPlus })));
+    await step(log, "login (SASL PLAIN)", () => c.login(acct.id, acct.pass).then(() => "ok"));
+    const folders = await step(log, "list", () => c.list());
     if (acct.mode !== "full") return { id: acct.id, mode: acct.mode, ok: true, log };
 
-    const drafts = folders.find((f) => f.specialUse === "\\Drafts")?.path || folders.find((f) => /drafts$/i.test(f.path))?.path;
-    const lock = await client.getMailboxLock("INBOX");
+    const drafts = folders.find((f) => f.specialUse === "\\Drafts")?.path || folders.find((f) => /drafts$/i.test(f.path || ""))?.path;
+    await step(log, "select INBOX", () => c.select("INBOX"));
+    const uids = await step(log, "uid search since 7d", async () => {
+      const r = await c.uidSearch(`SINCE ${imapDate(new Date(Date.now() - 7 * 864e5))}`);
+      return { count: r.length, last5: r.slice(-5) };
+    });
     let latest = null;
-    try {
-      await step(log, "select INBOX", () => ({ exists: client.mailbox.exists, uidValidity: String(client.mailbox.uidValidity) }));
-      const uids = await step(log, "search since 7d", async () => {
-        const r = await client.search({ since: new Date(Date.now() - 7 * 864e5) }, { uid: true });
-        return { count: r.length, uids: r.slice(-5) };
+    if (uids.count) {
+      latest = await step(log, "fetch headers (latest)", async () => {
+        const m = await c.uidFetchHeaders(uids.last5.at(-1));
+        return { uid: m.uid, flags: m.flags, from: addr(m.headers.from), subject: m.headers.subject || "", messageId: m.headers["message-id"] || null, references: m.headers.references || null };
       });
-      if (uids.count) {
-        latest = await step(log, "fetch envelope", async () => {
-          const m = await client.fetchOne(String(uids.uids.at(-1)), { envelope: true, flags: true, headers: ["references"] }, { uid: true });
-          return { uid: m.uid, subject: m.envelope.subject, from: m.envelope.from?.[0]?.address, messageId: m.envelope.messageId, flags: [...m.flags], references: m.headers?.toString().replace(/^references:\s*/i, "").trim() || null };
-        });
-        if (opts.flag) await step(log, "store \\Flagged on latest", () => client.messageFlagsAdd(String(latest.uid), ["\\Flagged"], { uid: true }));
-      }
-    } finally {
-      lock.release();
+      if (opts.flag) await step(log, "store \\Flagged on latest", () => c.uidStore(latest.uid, "+", ["\\Flagged"]).then(() => "ok"));
     }
     if (!drafts) throw new Error("no Drafts folder found");
     await step(log, `append draft to ${drafts}`, async () => {
       const mime = draftMime({
         from: acct.id,
         to: latest?.from || acct.id,
-        subject: latest ? `Re: ${latest.subject}` : "cpanel-mail-mcp spike draft",
+        subject: latest ? `Re: ${latest.subject.replace(/^re:\s*/i, "")}` : "cpanel-mail-mcp spike draft",
         body: "Spike draft from cpanel-mail-mcp. No signature added by the server. Do not send to anyone but the test mailbox.",
         inReplyTo: latest?.messageId,
         references: [latest?.references, latest?.messageId].filter(Boolean).join(" ") || null,
       });
-      const r = await client.append(drafts, mime, ["\\Draft", "\\Seen"]);
-      return { uid: r?.uid ?? null, replyTo: latest?.messageId || null };
+      const r = await c.append(drafts, mime, ["\\Draft", "\\Seen"]);
+      return { ...r, replyTo: latest?.messageId || null };
     });
     return { id: acct.id, mode: acct.mode, ok: true, log };
   } catch (e) {
     return { id: acct.id, mode: acct.mode, ok: false, log };
   } finally {
-    try { await client.logout(); } catch {}
+    await c.logout();
+    try { await sock.close(); } catch {}
   }
 }
 

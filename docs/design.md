@@ -67,7 +67,7 @@ cpanel-mail-mcp (Cloudflare Worker, CF account: scott@reasinger.net)
    |-- Filter translator (Gmail-style -> IMAP SEARCH)
    |-- ID codec (stable message IDs)
    |-- Account registry (3 accounts, 2 hosts, folder maps)
-   |-- IMAP client (imapflow over TLS 993)
+   |-- IMAP client (minimal, on cloudflare:sockets, TLS 993)
    v
 cPanel A IMAP          cPanel B IMAP
 ```
@@ -156,7 +156,7 @@ Unknown tokens are an error, never silently dropped. Date math uses America/Indi
 | ID | Decision | Options | Leaning |
 |---|---|---|---|
 | D1 | Signature handling | (a) Server appends the per-account signature to every draft body; skills keep sending signature-free bodies. (b) Skills include the signature in the body. (c) Rely on Spark adding it at send. | (a), pending spike check of (c): whether Spark appends a signature when sending a draft it did not create. If Spark does append, (a) prints it twice. |
-| D2 | Hosting | Workers vs Fly/VPS | Workers if the spike passes |
+| D2 | Hosting and IMAP client | Workers vs Fly/VPS | DECIDED (spike run 2): Workers, with a minimal native-socket IMAP client. imapflow times out on the Workers runtime; raw `cloudflare:sockets` TLS to cPanel works. |
 | D3 | OAuth upstream identity | GitHub (ironfis1), Google, Cloudflare Access | GitHub, single allowed login |
 | D4 | Forward format | Inline quote vs .eml attachment | Inline quote (matches touch-7 behavior) |
 | D5 | Archive folder | Use existing Archive if present on both hosts, else create | Verify in spike |
