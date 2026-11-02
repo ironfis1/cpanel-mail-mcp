@@ -82,7 +82,7 @@ cPanel A IMAP          cPanel B IMAP
 
 ### 6.1 Hosting
 
-Primary: Cloudflare Workers in a new, dedicated Cloudflare account owned by scott@reasinger.net, with hardware-key 2FA. Isolated from the sreasinger@gmail.com and scott@yourcigardenindy.com Cloudflare accounts.
+Primary: Cloudflare Workers in a new, dedicated Cloudflare account owned by scott@reasinger.net. 2FA: mobile authenticator enabled 2026-11-01; upgrade to a hardware key when Scott has one. Isolated from the sreasinger@gmail.com and scott@yourcigardenindy.com Cloudflare accounts.
 
 Spike result (D2): imapflow times out on the Workers runtime (`ETIMEOUT` after 30 s) even though raw TLS to cPanel succeeds in about 300 ms. The server therefore uses a minimal IMAP client written on `cloudflare:sockets` (prototype: `spike/src/imap.js`). It implements only the commands this design needs. Login is AUTHENTICATE PLAIN with SASL-IR, so password characters need no escaping. Every read has an explicit timeout; no step may hang. Fly.io/VPS is no longer the fallback.
 
@@ -180,7 +180,7 @@ Unknown tokens are an error, never silently dropped. Date math uses America/Indi
 | R1 | imapflow does not run on Workers | REALIZED (spike run 2). Replaced with native-socket client. Residual risk: our IMAP parser meets server responses the prototype did not see (large literals, unusual FETCH shapes). Mitigation: parser tests against recorded real responses from mcptest. |
 | R2 | cPHulk blocks cloud egress IPs | No retry on auth failure. Workers egress IPs are not stable, so whitelisting is not available; a block means a cPanel unblock by hand. |
 | R3 | Spark does not show IMAP-appended drafts promptly, or treats them differently | Spike run 3: drafts appear, thread and send correctly from desktop. Laptop not yet checked. |
-| R4 | Credential compromise exposes both businesses' mail | Dedicated CF account with hardware 2FA, unique mailbox passwords, single-principal OAuth, no send capability |
+| R4 | Credential compromise exposes both businesses' mail | Dedicated CF account with 2FA (mobile authenticator now, hardware key later), unique mailbox passwords, single-principal OAuth, no send capability |
 | R5 | Thread reconstruction differs from Spark's view | Acceptance compares thread output to Spark on sampled threads |
 | R6 | cPanel connection limits per account | One session per account per request; sequential within account |
 | R7 | Signature text exists in two places (Spark settings and server config) and drifts | Open question for the ambiguity log: which is the source of truth and how changes propagate |
