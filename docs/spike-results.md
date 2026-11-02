@@ -85,14 +85,6 @@ Pass criteria from design section 10:
 4. D1: does Spark append the account signature when sending that draft
 5. `\Flagged` shows as pinned in Spark; archive move shows as archived
 
-| Check | Result |
-|---|---|
-| 1 | |
-| 2 | |
-| 3 | |
-| 4 | |
-| 5 | |
-
 ## Run 4: native IMAP client against cPanel B (2026-11-02)
 
 mcptest@yourcigardenindy.com on server223.web-hosting.com:993. Workers Paid plan active on the account. Total 1,277 ms. Run without `flag=1`, so no flag was set.

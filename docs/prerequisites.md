@@ -11,4 +11,4 @@ Status of the setup items Scott owns before the build deploys. Facts here satisf
 | Dedicated Cloudflare account | REQ-2-18 | Done 2026-11-01 | scott@reasinger.net, workers.dev subdomain reasinger-ops |
 | 2FA on that account | REQ-18-13 | Done 2026-11-01 | Mobile authenticator. Hardware key later, not a deploy blocker. |
 | Workers Paid plan on that account | Resolution #78 | Done 2026-11-02 | Upgraded by Scott |
-| spec-v1.1 git tag on GitHub | none | Pending | Tag exists locally at a669065; push from a local clone |
+| spec-v1.1 git tag on GitHub | none | Done 2026-11-02 | Pushed by Scott |
