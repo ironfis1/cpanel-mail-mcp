@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Proposed resolutions for the ambiguity log
 
-Status: PROPOSAL for Scott's review (2026-11-01). Covers all 110 items in docs/ambiguity-log.md. Nothing here is applied until Scott approves; approved lines get copied into each item's Resolution field.
+Status: APPROVED 2026-11-01. Scott decided S-1 to S-7 (all option a, with signature texts supplied for S-1); R and M accepted in bulk. Resolutions copied into ambiguity-log.md. Covers all 110 items in docs/ambiguity-log.md. Nothing here is applied until Scott approves; approved lines get copied into each item's Resolution field.
 
 Inputs: ambiguity-log.md, design.md v0.2, spike-results.md, extraction/source-pack.md, plus the settled facts D1 (server signs), D2 (Workers, native-socket client, no Fly/VPS), no send and no SMTP in v1, never test against live inboxes (mcptest@reasinger.net is the test mailbox), and observed Spark send behavior.
 
