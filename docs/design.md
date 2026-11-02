@@ -155,7 +155,7 @@ Unknown tokens are an error, never silently dropped. Date math uses America/Indi
 
 | ID | Decision | Options | Leaning |
 |---|---|---|---|
-| D1 | Signature handling | (a) Server appends the per-account signature to every draft body; skills keep sending signature-free bodies. (b) Skills include the signature in the body. (c) Rely on Spark adding it at send. | (a), pending spike check of (c): whether Spark appends a signature when sending a draft it did not create. If Spark does append, (a) prints it twice. |
+| D1 | Signature handling | (a) server appends, (b) skills include, (c) Spark adds at send | DECIDED (spike run 3): (a). Spark does not sign drafts it did not create. Server appends the per-account signature; skills send signature-free bodies, unchanged. |
 | D2 | Hosting and IMAP client | Workers vs Fly/VPS | DECIDED (spike run 2): Workers, with a minimal native-socket IMAP client. imapflow times out on the Workers runtime; raw `cloudflare:sockets` TLS to cPanel works. |
 | D3 | OAuth upstream identity | GitHub (ironfis1), Google, Cloudflare Access | GitHub, single allowed login |
 | D4 | Forward format | Inline quote vs .eml attachment | Inline quote (matches touch-7 behavior) |
