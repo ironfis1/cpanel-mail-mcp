@@ -25,6 +25,14 @@ Success test: with sarhomepc powered off, the 6am email-crap-filter run complete
 - Permanent delete of messages. Draft delete is the only delete in scope.
 - Multi-user. One principal: Scott.
 
+## 3a. Alternatives considered (2026-11-01)
+
+| Option | Verdict | Reason |
+|---|---|---|
+| Fastmail (official remote MCP at api.fastmail.com/mcp, read/write/send scopes) | Rejected | Claude connects one Fastmail login, so all three addresses would collapse into one mailbox; the separate accounts Scott uses in Spark become folders and filters, and email-crap-filter's per-account triage needs rework. Requires MX migration for both domains. Cost is a wash with Workers, and Spark stays either way. |
+| Google Workspace | Rejected | Claude's Gmail connector reportedly connects one Google account at a time, already used by sreasinger@gmail.com. |
+| Keep cPanel mail, build this server | Chosen | cPanel mail is free with the site hosting that stays regardless. Spike proved the path on the live host. Account structure and Spark setup unchanged. |
+
 ## 4. Context
 
 ### 4.1 Mailboxes
