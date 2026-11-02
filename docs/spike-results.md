@@ -58,15 +58,15 @@ Folder map, cPanel A (delimiter `.`, all advertise SPECIAL-USE):
 Findings for the spec:
 - F1. Subjects arrive RFC 2047 encoded (`=?UTF-8?B?...?=`). The server must decode headers before returning them and before building `Re:` subjects. The spike draft subject is still encoded; valid for mail clients, wrong for skill output.
 - F2. Two junk folders on one host (`INBOX.spam` flagged, `INBOX.Junk` not). Folder resolution order: SPECIAL-USE first, name match only as fallback.
-- F3. D5 resolved for cPanel A: `INBOX.Archive` exists with `\\Archive`. Still to confirm on cPanel B.
+- F3. D5 resolved on both hosts: `INBOX.Archive` exists with `\\Archive` on cPanel A (run 3) and cPanel B (run 4).
 - F4. Server-side latency is small (about 45 ms per command after login). Connection setup plus login is about 750 ms per account, so per-request connect is acceptable; no pooling needed.
 
 Pass criteria status:
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | Protocol ops on Workers | PASS on cPanel A. cPanel B pending (list-only run). |
-| 2 | Folder names and SPECIAL-USE | cPanel A done (above). cPanel B pending. |
+| 1 | Protocol ops on Workers | PASS on cPanel A (run 3) and cPanel B (run 4). |
+| 2 | Folder names and SPECIAL-USE | Done on both hosts. cPanel B layout is identical to cPanel A (run 4). |
 | 3 | Draft visible and threaded in Spark | PASS. Draft appeared in Spark, sent from Spark, arrived with In-Reply-To and References intact; Gmail threaded send 2 onto send 1. Spark re-composes on send (new `@Spark` Message-ID, multipart text+HTML) and decodes the RFC 2047 subject correctly. |
 | 4 | D1 signature on send | ANSWERED: Spark does NOT add the account signature to a draft it did not create. Send 2 went out with a default signature assigned to mcptest in Spark (Settings > Composer > Signatures, screenshot 2026-11-01 21:20); body arrived with no signature. |
 | 5 | Flagged shows as pinned; archive shows as archived | Flag PASS (shows pinned in Spark; Spark also set \\Answered on reply). Archive move not yet exercised. |
@@ -92,3 +92,22 @@ Pass criteria from design section 10:
 | 3 | |
 | 4 | |
 | 5 | |
+
+## Run 4: native IMAP client against cPanel B (2026-11-02)
+
+mcptest@yourcigardenindy.com on server223.web-hosting.com:993. Workers Paid plan active on the account. Total 1,277 ms. Run without `flag=1`, so no flag was set.
+
+| Step | Result | ms |
+|---|---|---|
+| Raw TLS probe | PASS (same Dovecot capabilities as cPanel A) | 253 |
+| Greeting (LITERAL+) | PASS | 246 |
+| Login, AUTHENTICATE PLAIN with SASL-IR | PASS | 352 |
+| LIST | PASS | 59 |
+| SELECT INBOX | PASS (1 message, UIDVALIDITY 1793655579) | 63 |
+| UID SEARCH SINCE 7d | PASS | 62 |
+| UID FETCH headers | PASS (subject RFC 2047 encoded, same as F1) | 58 |
+| APPEND to INBOX.Drafts | PASS (APPENDUID 1793655584 1) | 125 |
+
+Folder map, cPanel B: identical to cPanel A. INBOX, INBOX.Sent (\\Sent), INBOX.Drafts (\\Drafts), INBOX.Archive (\\Archive), INBOX.Trash (\\Trash), INBOX.spam (\\Junk), and the unflagged INBOX.Junk. F2 applies on both hosts.
+
+Spike status: criteria 1 and 2 now complete on both hosts. Remaining unexercised: archive MOVE, and the laptop Spark display check. Both are covered by build integration tests (spec section 14).
