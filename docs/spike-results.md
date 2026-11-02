@@ -27,7 +27,49 @@ Notes:
 
 Decision D2: stay on Workers; replace imapflow with a minimal IMAP client on the native socket (`spike/src/imap.js`). Login uses AUTHENTICATE PLAIN with SASL-IR, so password characters need no escaping. Unit tested against a scripted Dovecot fake (LITERAL+ on and off, literal mailbox names, auth failure, silent-server timeout). Bundle drops from 454 KB to 4.6 KB gzip.
 
-## Run 3: deployed, native IMAP client (pending)
+## Run 3: deployed, native IMAP client (2026-11-01)
+
+mcptest@reasinger.net on server128.web-hosting.com:993. Total 1,285 ms end to end.
+
+| Step | Result | ms |
+|---|---|---|
+| Raw TLS probe | PASS | 331 |
+| Greeting (LITERAL+ advertised) | PASS | 143 |
+| Login, AUTHENTICATE PLAIN with SASL-IR | PASS | 278 |
+| LIST | PASS | 47 |
+| SELECT INBOX | PASS (1 message, UIDVALIDITY 1793547456) | 44 |
+| UID SEARCH SINCE 7d | PASS | 45 |
+| UID FETCH headers | PASS | 45 |
+| UID STORE +FLAGS \\Flagged | PASS | 46 |
+| APPEND to INBOX.Drafts, \\Draft \\Seen, LITERAL+ | PASS (APPENDUID 1793547457 1) | 256 |
+
+Folder map, cPanel A (delimiter `.`, all advertise SPECIAL-USE):
+
+| Logical | Path | Special-use |
+|---|---|---|
+| Inbox | INBOX | |
+| Sent | INBOX.Sent | \\Sent |
+| Drafts | INBOX.Drafts | \\Drafts |
+| Archive | INBOX.Archive | \\Archive |
+| Trash | INBOX.Trash | \\Trash |
+| Junk | INBOX.spam | \\Junk |
+| (none) | INBOX.Junk | none. A second junk folder without the flag. Discovery must prefer SPECIAL-USE over name match. |
+
+Findings for the spec:
+- F1. Subjects arrive RFC 2047 encoded (`=?UTF-8?B?...?=`). The server must decode headers before returning them and before building `Re:` subjects. The spike draft subject is still encoded; valid for mail clients, wrong for skill output.
+- F2. Two junk folders on one host (`INBOX.spam` flagged, `INBOX.Junk` not). Folder resolution order: SPECIAL-USE first, name match only as fallback.
+- F3. D5 resolved for cPanel A: `INBOX.Archive` exists with `\\Archive`. Still to confirm on cPanel B.
+- F4. Server-side latency is small (about 45 ms per command after login). Connection setup plus login is about 750 ms per account, so per-request connect is acceptable; no pooling needed.
+
+Pass criteria status:
+
+| # | Criterion | Status |
+|---|---|---|
+| 1 | Protocol ops on Workers | PASS on cPanel A. cPanel B pending (list-only run). |
+| 2 | Folder names and SPECIAL-USE | cPanel A done (above). cPanel B pending. |
+| 3 | Draft visible and threaded in Spark | Pending Scott |
+| 4 | D1 signature on send | Pending Scott |
+| 5 | Flagged shows as pinned; archive shows as archived | Flag pending Scott. Archive move not yet exercised. |
 
 Pass criteria from design section 10:
 
