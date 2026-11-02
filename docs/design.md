@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Design
 
-Status: DRAFT v0.1 (2026-11-01)
+Status: DRAFT v0.2 (2026-11-01). v0.2 folds in spike results (docs/spike-results.md).
 Owner: Scott Reasinger
 Repo: ironfis1/cpanel-mail-mcp
 
@@ -31,11 +31,11 @@ Success test: with sarhomepc powered off, the 6am email-crap-filter run complete
 
 | Mailbox | Host | Used by |
 |---|---|---|
-| scott@reasinger.net | cPanel A (reasinger.net) | crap-filter Part B and C, get-in-the-room |
+| scott@reasinger.net | cPanel A (server128.web-hosting.com) | crap-filter Part B and C, get-in-the-room |
 | scott@yourcigardenindy.com | cPanel B (yourcigardenindy.com) | crap-filter Part B |
 | founders@yourcigardenindy.com | cPanel B (yourcigardenindy.com) | crap-filter Part B |
 
-Two hosts, three logins. Hosts may differ in folder naming (`INBOX.Sent` vs `Sent`).
+Two hosts, three logins. cPanel A IMAP host is `server128.web-hosting.com:993` (cPanel suggests `reasinger.net`, which is the web host record; use the server name). cPanel B host still to confirm from that cPanel's address bar. cPanel A folders use the `INBOX.` prefix with `.` delimiter and advertise SPECIAL-USE (spike run 3). A test mailbox, mcptest@reasinger.net, exists on cPanel A for integration tests.
 
 ### 4.2 Current Spark calls by skill
 
@@ -43,7 +43,7 @@ Two hosts, three logins. Hosts may differ in folder naming (`INBOX.Sent` vs `Sen
 |---|---|
 | email-crap-filter | `emails` (folder, filter, page_size), `search` (query, in, filter), `thread`, `action pin`, `action archive` |
 | get-in-the-room | `draft` new, `draft reply_to`, `draft reply_all`, `draft forward`, `draft edit`, `draft delete`; `emails` on Inbox and Sent with filters; `search` |
-| gatekeeper-panel | None directly. Assumes the draft body carries no signature because Spark appends one. |
+| gatekeeper-panel | None directly. Assumes the draft body carries no signature and the sent mail carries the account signature. |
 
 The full call shapes in those three SKILL.md files are source material for the rule extraction step.
 
@@ -76,7 +76,7 @@ cPanel A IMAP          cPanel B IMAP
 
 Primary: Cloudflare Workers in a new, dedicated Cloudflare account owned by scott@reasinger.net, with hardware-key 2FA. Isolated from the sreasinger@gmail.com and scott@yourcigardenindy.com Cloudflare accounts.
 
-Feasibility gate (spike, before spec freeze): `imapflow` must connect, log in, SELECT, SEARCH, FETCH and APPEND on the Workers runtime against both hosts. If it does not run cleanly within a timeboxed hour, the same code deploys as a Node service on Fly.io or a small VPS. The rest of this design is unchanged by that choice except 6.4.
+Spike result (D2): imapflow times out on the Workers runtime (`ETIMEOUT` after 30 s) even though raw TLS to cPanel succeeds in about 300 ms. The server therefore uses a minimal IMAP client written on `cloudflare:sockets` (prototype: `spike/src/imap.js`). It implements only the commands this design needs. Login is AUTHENTICATE PLAIN with SASL-IR, so password characters need no escaping. Every read has an explicit timeout; no step may hang. Fly.io/VPS is no longer the fallback.
 
 ### 6.2 Auth
 
@@ -94,15 +94,15 @@ id: scott@reasinger.net
 host: <cPanel A IMAP host>
 port: 993
 secret_ref: IMAP_PASS_REASINGER_SCOTT
-signature: <per-account signature, see D1>
+signature: <exact per-account signature text, appended by the server, see D1>
 folders: discovered at first connect, cached, overridable
 ```
 
-Folder discovery uses IMAP LIST and SPECIAL-USE flags (`\Sent`, `\Drafts`, `\Archive`, `\Trash`) where the server advertises them, falling back to name matching. The logical names `Inbox`, `Sent`, `Drafts`, `Archive` map to real names per account.
+Folder discovery uses IMAP LIST and SPECIAL-USE flags (`\Sent`, `\Drafts`, `\Archive`, `\Trash`, `\Junk`) where the server advertises them, falling back to name matching only when no folder carries the flag. SPECIAL-USE always wins over name: cPanel A has both `INBOX.spam` (flagged `\Junk`) and `INBOX.Junk` (unflagged); Junk resolves to `INBOX.spam`. The logical names `Inbox`, `Sent`, `Drafts`, `Archive` map to real names per account.
 
 ### 6.4 Connection model
 
-One IMAP session per account per request, opened lazily, closed at request end. No persistent connections (Workers cannot hold them; this also keeps behavior identical on Fly). Parallel across accounts, sequential within an account.
+One IMAP session per account per request, opened lazily, closed at request end. No persistent connections. Measured cost (spike run 3): about 750 ms to connect and log in, about 45 ms per command after that, so per-request connect is acceptable and no pooling is needed. Parallel across accounts, sequential within an account.
 
 cPHulk risk: repeated failed logins from a cloud IP can block that IP on the cPanel host. Mitigation: on any auth failure, the account is disabled for the remainder of the request and the error says to check the secret; no retries on auth errors. Egress IP whitelisting on both hosts if the hosting option gives a stable egress IP (Workers does not by default; see R2).
 
@@ -150,6 +150,9 @@ Unknown tokens are an error, never silently dropped. Date math uses America/Indi
 - Edit: replace by appending the new version and deleting the old draft UID (IMAP has no in-place edit). Returns the new ID.
 - Delete: draft-only. Refuse if the target lacks `\Draft` or is not in the Drafts folder.
 - Body input is markdown; the server renders multipart text and HTML.
+- Signature (D1): the server appends the account's configured signature to every draft it creates or edits. Spark does not add a signature to a draft it did not compose (spike run 3, verified with a default signature assigned to the account). Skills keep sending signature-free bodies.
+- Header decoding: subjects and address display names arrive RFC 2047 encoded (`=?UTF-8?B?...?=`). The server decodes all returned header text, and builds `Re:` / `Fwd:` subjects from the decoded subject, re-encoding on write when non-ASCII.
+- Spark behavior on send (observed): Spark re-composes the draft, assigns its own `@Spark` Message-ID, keeps `In-Reply-To` and `References`, and sets `\Answered` on the original. The server's draft Message-ID is therefore not the sent Message-ID; anything that must find the sent copy searches Sent by recipient, subject and date, not by the draft's Message-ID.
 
 ## 8. Open decisions
 
@@ -157,25 +160,29 @@ Unknown tokens are an error, never silently dropped. Date math uses America/Indi
 |---|---|---|---|
 | D1 | Signature handling | (a) server appends, (b) skills include, (c) Spark adds at send | DECIDED (spike run 3): (a). Spark does not sign drafts it did not create. Server appends the per-account signature; skills send signature-free bodies, unchanged. |
 | D2 | Hosting and IMAP client | Workers vs Fly/VPS | DECIDED (spike run 2): Workers, with a minimal native-socket IMAP client. imapflow times out on the Workers runtime; raw `cloudflare:sockets` TLS to cPanel works. |
-| D3 | OAuth upstream identity | GitHub (ironfis1), Google, Cloudflare Access | GitHub, single allowed login |
-| D4 | Forward format | Inline quote vs .eml attachment | Inline quote (matches touch-7 behavior) |
-| D5 | Archive folder | Use existing Archive if present on both hosts, else create | Verify in spike |
+| D3 | OAuth upstream identity | GitHub (ironfis1), Google, Cloudflare Access | GitHub, single allowed login. Open. |
+| D4 | Forward format | Inline quote vs .eml attachment | Inline quote (matches touch-7 behavior). Open. |
+| D5 | Archive folder | Use existing Archive if present, else create | cPanel A: `INBOX.Archive` with `\Archive` exists (spike run 3). cPanel B: verify in integration tests. Never auto-create; a missing Archive is an error. |
 | D6 | Scheduled-task fallback | Keep Spark path as fallback after cutover, or remove | Keep Spark as fallback for 30 days |
 
 ## 9. Risks
 
 | ID | Risk | Mitigation |
 |---|---|---|
-| R1 | imapflow does not run on Workers | Timeboxed spike; Fly/VPS fallback with same code |
-| R2 | cPHulk blocks cloud egress IPs | No retry on auth failure; stable egress (Fly static IP) if blocks occur |
-| R3 | Spark does not show IMAP-appended drafts promptly, or treats them differently | Spike verifies Drafts sync and send from Spark on desktop and laptop |
+| R1 | imapflow does not run on Workers | REALIZED (spike run 2). Replaced with native-socket client. Residual risk: our IMAP parser meets server responses the prototype did not see (large literals, unusual FETCH shapes). Mitigation: parser tests against recorded real responses from mcptest. |
+| R2 | cPHulk blocks cloud egress IPs | No retry on auth failure. Workers egress IPs are not stable, so whitelisting is not available; a block means a cPanel unblock by hand. |
+| R3 | Spark does not show IMAP-appended drafts promptly, or treats them differently | Spike run 3: drafts appear, thread and send correctly from desktop. Laptop not yet checked. |
 | R4 | Credential compromise exposes both businesses' mail | Dedicated CF account with hardware 2FA, unique mailbox passwords, single-principal OAuth, no send capability |
 | R5 | Thread reconstruction differs from Spark's view | Acceptance compares thread output to Spark on sampled threads |
 | R6 | cPanel connection limits per account | One session per account per request; sequential within account |
+| R7 | Signature text exists in two places (Spark settings and server config) and drifts | Open question for the ambiguity log: which is the source of truth and how changes propagate |
+| R8 | New sender reputation: first send from mcptest landed in Gmail spam despite SPF, DKIM and DMARC pass | Not a server issue (Spark sends). Live accounts have history. Note only. |
 
 ## 10. Spike plan (feasibility gate)
 
-Timebox: one working session. Pass criteria:
+Status: COMPLETE (2026-11-01). Results in docs/spike-results.md. Criteria 1 and 2 passed on cPanel A; cPanel B and archive move are deferred to integration tests. Criteria 3, 4, 5 (pin) passed.
+
+Original pass criteria:
 
 1. imapflow on Workers: login, LIST, SELECT, SEARCH, FETCH, APPEND, STORE flags, MOVE against both hosts.
 2. Folder names and SPECIAL-USE flags recorded for all three accounts.
@@ -187,8 +194,8 @@ Outcome recorded in `docs/spike-results.md` and folded into the design before ru
 
 ## 11. Build process
 
-1. This design doc (v0.1), reviewed by Scott.
-2. Spike; update design with results (v0.2).
+1. This design doc (v0.1), reviewed by Scott. DONE.
+2. Spike; update design with results (v0.2). DONE.
 3. extract-rules-and-flag-ambiguity over design v0.2 plus the email-crap-filter, get-in-the-room and gatekeeper-panel SKILL.md files. Outputs `docs/rule-base.md`, `docs/ambiguity-log.md`.
 4. Scott resolves the ambiguity log.
 5. write-spec-from-resolutions. Output `docs/spec.md`, every requirement cited to a rule or resolution.
