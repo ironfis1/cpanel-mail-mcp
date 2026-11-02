@@ -68,10 +68,12 @@ Pass criteria status:
 | 1 | Protocol ops on Workers | PASS on cPanel A. cPanel B pending (list-only run). |
 | 2 | Folder names and SPECIAL-USE | cPanel A done (above). cPanel B pending. |
 | 3 | Draft visible and threaded in Spark | PASS. Draft appeared in Spark, sent from Spark, arrived with In-Reply-To and References intact; Gmail threaded send 2 onto send 1. Spark re-composes on send (new `@Spark` Message-ID, multipart text+HTML) and decodes the RFC 2047 subject correctly. |
-| 4 | D1 signature on send | ANSWERED: Spark does NOT add the account signature to a draft it did not create. Send 2 went out after a signature was set on mcptest in Spark; body arrived with no signature. |
+| 4 | D1 signature on send | ANSWERED: Spark does NOT add the account signature to a draft it did not create. Send 2 went out with a default signature assigned to mcptest in Spark (Settings > Composer > Signatures, screenshot 2026-11-01 21:20); body arrived with no signature. |
 | 5 | Flagged shows as pinned; archive shows as archived | Flag PASS (shows pinned in Spark; Spark also set \\Answered on reply). Archive move not yet exercised. |
 
 Deliverability note: send 1 landed in Gmail spam despite SPF, DKIM and DMARC all passing for reasinger.net (sent by Spark via server128 SMTP). Cause is a new sender with a one-line body, not the build. Send 2 landed in Inbox marked Important.
+
+Consequence: signature text now lives in two places (Spark settings and server config). A change in Spark does not reach server-created drafts. Carry into the ambiguity log as a source-of-truth question.
 
 Decision D1: option (a). The server appends the per-account signature to every draft body it creates. Skills keep sending signature-free bodies, which matches get-in-the-room and gatekeeper-panel today.
 
