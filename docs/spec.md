@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Build specification
 
-Status: v1.0 (2026-11-01), written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries) only.
+Status: v1.0 FINAL (2026-11-01). Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
 
 ## 0. How to read this spec
 
@@ -8,7 +8,7 @@ Status: v1.0 (2026-11-01), written from docs/rule-base.md (95 entries) and docs/
 - Every requirement ends with one or more citation tags. `[RB-XX-n]` cites a rule-base entry. `[Resolution #n]` cites the Resolution field of ambiguity-log entry n.
 - Where a Resolution overrides or refines a rule-base entry, the Resolution wins and the tag reads, for example, `[RB-FU-6, overridden by Resolution #32]` or `[RB-SG-1, refined by Resolution #2]`.
 - "The server" means the cpanel-mail-mcp Cloudflare Worker. "The skills" means email-crap-filter, get-in-the-room and gatekeeper-panel.
-- Statements in section 17 are not requirements. They are gaps found while writing this spec and need Scott's decision.
+- Section 17 lists gaps found while writing this spec, each now resolved by Scott. Section 18 turns those resolutions into requirements tagged `[Gap Gn]`.
 
 ## 1. Scope and non-goals
 
@@ -59,8 +59,8 @@ Status: v1.0 (2026-11-01), written from docs/rule-base.md (95 entries) and docs/
 
 ### 2.4 Hosting
 
-- **REQ-2-17** The server is hosted on Cloudflare Workers in a dedicated Cloudflare account owned by scott@reasinger.net with hardware-key 2FA, isolated from the sreasinger@gmail.com and scott@yourcigardenindy.com Cloudflare accounts. [RB-OT-2]
-- **REQ-2-18** Workers is the only hosting platform (no "Primary" qualifier and no fallback platform). Scott confirms whether the spike's Cloudflare account (scott@reasinger.net, reasinger-ops) is the dedicated account with hardware-key 2FA; if yes it is production, if not a new account is created. [RB-OT-2, refined by Resolution #73]
+- **REQ-2-17** The server is hosted on Cloudflare Workers in a dedicated Cloudflare account owned by scott@reasinger.net with 2FA (see REQ-18-13), isolated from the sreasinger@gmail.com and scott@yourcigardenindy.com Cloudflare accounts. [RB-OT-2]
+- **REQ-2-18** Workers is the only hosting platform (no "Primary" qualifier and no fallback platform). Scott confirms whether the spike's Cloudflare account (scott@reasinger.net, reasinger-ops) is the dedicated account with 2FA (see REQ-18-13); if yes it is production, if not a new account is created. [RB-OT-2, refined by Resolution #73]
 - **REQ-2-19** The Worker comprises an OAuth provider (workers-oauth-provider, single allowed principal), a Spark-compatible tool layer, a Gmail-style to IMAP SEARCH filter translator, a stable-ID codec, an account registry (3 accounts, 2 hosts, folder maps) and a minimal IMAP client on cloudflare:sockets over TLS 993. [RB-OT-1]
 - **REQ-2-20** Bundle size is not a constraint (4.6 KB gzip). The Workers Paid plan (USD 5 per month) is recommended because the free plan's 10 ms CPU limit per request is tight for MIME parsing and markdown rendering. [Resolution #78]
 
@@ -76,7 +76,7 @@ Status: v1.0 (2026-11-01), written from docs/rule-base.md (95 entries) and docs/
 - **REQ-3-8** There is no authless mode and no shared-secret URL. [RB-AS-3]
 - **REQ-3-9** Least privilege: the server may read, flag, move and write to Drafts only; nothing that sends and nothing that permanently deletes received mail. [RB-AS-5]
 - **REQ-3-10** Message bodies are never logged. [RB-AS-6]
-- **REQ-3-11** The R4 credential-compromise mitigation is the combination of: the dedicated Cloudflare account with hardware 2FA, unique mailbox passwords, single-principal OAuth and no send capability. [RB-AS-7]
+- **REQ-3-11** The R4 credential-compromise mitigation is the combination of: the dedicated Cloudflare account with 2FA (see REQ-18-13), unique mailbox passwords, single-principal OAuth and no send capability. [RB-AS-7]
 
 ## 4. Connection and IMAP client
 
@@ -429,81 +429,77 @@ Topic: Full filter token table
 What is missing: The inputs give translations only for `from:` (FROM, Resolution #46), `newer_than:Nd` (SINCE, Resolution #45) and bare words (TEXT, RB-FS-3). Resolution #84 accepts "the eight token translations" and Resolution #44 refers to "the supported table", but the table's content (for example `to:`, and any others) is not in either input. `to:<address>` is used by the skills (Resolution #79, Resolution #21) with no translation or matching rule stated.
 Why it matters: REQ-7-3 rejects any token outside the supported table, so the table must be defined before the translator can be built or tested; `to:` matching decides whether send confirmation and touch-7 lookup find the right message.
 Options: (a) Copy the design's token table into a rule-base entry or Resolution. (b) Support only the tokens the skills pass (REQ-7-10, REQ-7-11) in v1.
-Resolution:
-
-## Gap G2
+Resolution: Accepted 2026-11-01 (Scott, accept all): option (a). The full token table from design.md section 7.2 is adopted.## Gap G2
 Topic: Positive list of logged fields
 What is missing: Resolution #91 accepts a LOG-FIELDS definition but neither input states which fields are logged, beyond the account ID, filter token names and an error class code (Resolution #75). Whether correspondent addresses or domains may be logged is also not stated.
 Why it matters: REQ-14-1 needs a testable definition of what each log line contains.
 Options: (a) Add the field list (for example tool name, account, host, outcome, latency, error class) as a Resolution. (b) Log only the fields named in Resolution #75.
-Resolution:
-
-## Gap G3
+Resolution: Accepted 2026-11-01: option (a). Field list adopted from design.md section 13.## Gap G3
 Topic: Exact tool schemas (parameter names, required vs optional, output shapes)
 What is missing: Resolution #58 requires shapes matching Spark's schema, but the inputs do not give: the `thread` input parameter name; any parameters for `folders` and `availability`; whether `account`, `to`, `subject` are required on a new draft; the output object shapes for every tool, including how "accounts reached" (RB-FU-1), per-ID `action` results (Resolution #39), the edit warning (Resolution #56) and the "more pages" indicator (Resolution #27) are represented.
 Why it matters: Drop-in compatibility and one-test-per-REQ both need concrete schemas.
 Options: (a) Record the Spark schemas for the called tools as a rule-base entry or Resolution. (b) Define server schemas in a follow-up resolution.
-Resolution:
-
-## Gap G4
+Resolution: Accepted 2026-11-01: option (a). Spark connector schemas as recorded in docs/proposed-resolutions.md ("New evidence used") are adopted for every called tool; outputs carry explicit fields for accounts reached, per-ID action results, edit warnings and a more-pages flag.## Gap G4
 Topic: `search` paging, cross-account merge, and the 20-result cap
 What is missing: Resolution #23 caps `search` at 20 results newest first, but does not say whether the cap is per account or total across accounts, whether `search` supports `page`, or what `search` returns per result (whether it matches `emails` fields or includes bodies).
 Why it matters: The bounce sweep and reply lookups across all accounts could silently miss results past 20.
 Options: (a) Total cap of 20, no paging, same per-message fields as `emails`. (b) Cap per account. (c) Support `page` as in `emails`.
-Resolution:
-
-## Gap G5
+Resolution: Accepted 2026-11-01: option (a). Total cap of 20 across accounts, no paging, same per-message fields as `emails`.## Gap G5
 Topic: `move` target naming
 What is missing: RB-FA-1 says `move` goes to "a named folder" but neither input says whether the name is a logical name, a real folder name, or `<account>:<Folder>`, nor what happens when the target does not exist.
 Why it matters: A move to a misnamed folder could fail silently or create a folder.
 Options: (a) Logical names only. (b) Real folder names allowed. (c) `<account>:<Folder>` addressing as in `emails`.
-Resolution:
-
-## Gap G6
+Resolution: Accepted 2026-11-01: option (c). `<account>:<Folder>` addressing as in `emails`; a target that does not resolve is an error.## Gap G6
 Topic: Move or archive when the host advertises neither MOVE nor UIDPLUS
 What is missing: Resolution #68 requires MOVE when advertised, else UID COPY plus STORE `\Deleted` plus UID EXPUNGE (needs UIDPLUS). Resolution #52 says delete refuses without UIDPLUS, but nothing says what `archive`/`move` do when neither MOVE nor UIDPLUS is available.
 Why it matters: A plain EXPUNGE could remove other messages flagged `\Deleted` in the folder.
 Options: (a) Refuse the move with an error, as for delete. (b) Copy only, leaving the original in place, with a warning.
-Resolution:
-
-## Gap G7
+Resolution: Accepted 2026-11-01: option (a). Refuse with an error, as for delete.## Gap G7
 Topic: Markdown dialect and quoted-original format
 What is missing: RB-DR-4 says the body is markdown rendered to text and HTML, but no input names the markdown dialect or plain-text rendering rules. RB-DR-1 and Resolution #14 say the original is quoted below the body (reply) or inline (forward), but the quote format (attribution line, `>` prefixing, forwarded-header block) is not stated.
 Why it matters: Recipients see the rendered result; tests need an expected output.
 Options: (a) Specify a dialect (for example CommonMark) and a quote format by Resolution. (b) Match Spark's observed output.
-Resolution:
-
-## Gap G8
+Resolution: Accepted 2026-11-01: option (a) using CommonMark, with the quote format matching Spark's observed output.## Gap G8
 Topic: Thread ordering direction
 What is missing: Resolution #17 says threads are "ordered by date" but not ascending or descending.
 Why it matters: The output order is a testable property (REQ-6-31), even though the acceptance comparison allows ordering differences (Resolution #71).
 Options: (a) Oldest first. (b) Newest first.
-Resolution:
-
-## Gap G9
+Resolution: Accepted 2026-11-01: option (a). Oldest first.## Gap G9
 Topic: Partial-reachability first-line wording
 What is missing: Resolution #33 fixes the first line when every account failed; Resolution #34 says the first line names each unreached account and host when some fail, but gives no exact wording.
 Why it matters: Scheduled-run reports and tests need a fixed string.
 Options: (a) Reuse the Resolution #33 format with the unreached accounts and hosts listed. (b) A separate wording.
-Resolution:
-
-## Gap G10
+Resolution: Accepted 2026-11-01: option (a). Reuse the Resolution #33 format listing the unreached accounts and hosts.## Gap G10
 Topic: Touch-7 forward call must now pass `to`
 What is missing: RB-DR-7 gives the touch-7 call without `to`; Resolution #15 makes `to` required on a forward. No Resolution states that the get-in-the-room touch-7 call is changed at cutover to pass `to`, or where the address comes from.
 Why it matters: As written, the skill's touch-7 call would fail on the server after cutover.
 Options: (a) Add a cutover skill change: the touch-7 call passes `to: [<contact address>]`. (b) Server defaults `to` from the original (contradicts Resolution #15).
-Resolution:
-
-## Gap G11
+Resolution: Accepted 2026-11-01: option (a). Cutover skill change: get-in-the-room touch 7 passes `to: [<contact address>]`, the same address it uses to find the original.## Gap G11
 Topic: GitHub OAuth app credentials and token storage
 What is missing: Resolution #72 picks GitHub OAuth with login ironfis1 and sets token lifetimes, but no input names the secrets for the GitHub OAuth client ID and secret, or where workers-oauth-provider stores grants (needed for "revoke by deleting the grant").
 Why it matters: The README and deploy steps cannot be written, and revocation cannot be tested, without these.
 Options: (a) Name the secrets and storage binding in a Resolution. (b) Use workers-oauth-provider defaults and document them.
-Resolution:
-
-## Gap G12
+Resolution: Accepted 2026-11-01: option (b). workers-oauth-provider defaults, with secret and binding names documented in the README.## Gap G12
 Topic: 2FA type on the dedicated Cloudflare account
 What is missing: RB-OT-2, RB-AS-7 and Resolution #73 require hardware-key 2FA. The current docs/design.md (section 6.1 and R4) now reads "mobile authenticator enabled 2026-11-01; upgrade to a hardware key when Scott has one", which neither input reflects. This spec follows the inputs (REQ-2-17, REQ-2-18, REQ-3-11).
 Why it matters: If hardware-key 2FA is a deploy prerequisite, deploy is blocked until Scott has a key; if not, the inputs need updating.
 Options: (a) Hardware key required before production deploy. (b) Mobile authenticator accepted for now, hardware key later; update the rule base.
-Resolution:
+Resolution: Accepted 2026-11-01: option (b). Mobile authenticator 2FA accepted now (enabled 2026-11-01); hardware key added later as a second factor. Deploy is not blocked.
+
+## 18. Requirements from resolved gaps
+
+Each requirement below cites `[Gap Gn]`, the resolved entry in section 17.
+
+- **REQ-18-1** The filter grammar supports exactly these tokens: `from:x` (IMAP FROM), `to:x` (TO), `subject:x` (SUBJECT), `newer_than:Nd` (SINCE today minus N), `older_than:Nd` (BEFORE today minus N), `is:unread` / `is:read` (UNSEEN / SEEN), `is:pinned` (FLAGGED), and bare words (TEXT). Any other token is an error. [Gap G1]
+- **REQ-18-2** Each log record contains only: tool name, account, host, outcome, latency, error class. Logs never contain message bodies, credentials, or correspondent addresses; a correspondent may appear only as a domain. [Gap G2]
+- **REQ-18-3** Tool input schemas for `emails`, `search`, `thread`, `action` and `draft` match the Spark connector schemas recorded in docs/proposed-resolutions.md, section "New evidence used". [Gap G3]
+- **REQ-18-4** Tool outputs carry explicit fields for: accounts reached and not reached, per-ID results on `action`, any warning on `draft` edit, and a more-pages flag on `emails`. [Gap G3]
+- **REQ-18-5** `search` returns at most 20 results in total across all accounts searched, has no paging, and returns the same per-message fields as `emails`. [Gap G4]
+- **REQ-18-6** The `move` target uses `<account>:<Folder>` addressing as in `emails`. A target that does not resolve to an existing folder is an error and nothing moves. [Gap G5]
+- **REQ-18-7** When the host advertises neither MOVE nor UIDPLUS, `archive` and `move` refuse with an error and leave the message in place. [Gap G6]
+- **REQ-18-8** Draft bodies are parsed as CommonMark. Quoted originals in replies and forwards follow the format Spark produces. [Gap G7]
+- **REQ-18-9** `thread` returns messages ordered oldest first. [Gap G8]
+- **REQ-18-10** When some accounts are unreached, the first line of the report uses the Resolution #33 format and lists each unreached account and its host. [Gap G9]
+- **REQ-18-11** At cutover, get-in-the-room touch 7 passes `to: [<contact address>]` on the forward, using the address it already uses to find the original. [Gap G10]
+- **REQ-18-12** OAuth grant storage and secret names use workers-oauth-provider defaults; the README documents each secret and binding name and the revocation procedure. [Gap G11]
+- **REQ-18-13** Two-factor on the dedicated Cloudflare account is satisfied by a mobile authenticator app; a hardware key is added later as an additional factor and is not a deploy prerequisite. This supersedes the hardware-key wording in REQ-2-17, REQ-2-18 and REQ-3-11. [Gap G12]
