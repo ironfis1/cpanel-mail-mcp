@@ -40,4 +40,4 @@ Proposed fix for D-1 (replaces REQ-18-10): on partial reachability the first lin
 "PARTIAL RUN: <accounts> on <host> NOT checked (mail server unreachable). Bounces and <reached accounts> checked."
 The Resolution #33 wording stays for the all-down case only.
 
-Status: D-1 awaiting Scott.
+Status: D-1 approved by Scott 2026-11-01 and applied as REQ-18-10 in spec v1.1. Added: if scott@reasinger.net itself is unreached, "Bounces and" is dropped from the line, since bounces run only on that account.
