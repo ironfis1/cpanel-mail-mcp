@@ -3,6 +3,8 @@
 # No top-level main: a bare `wrangler deploy` must fail instead of hitting production
 # (wrangler would otherwise take the Worker name from package.json).
 # Passwords are never here. Each secret_ref names a secret set with `wrangler secret put`.
+# MAILBOXES is the account registry (src/accounts.js). folders holds overrides: a logical name set
+# here replaces the discovered folder. An empty signature means unset.
 compatibility_date = "2026-10-01"
 workers_dev = true
 
@@ -14,8 +16,8 @@ main = "src/index.js"
 [env.staging.vars]
 ENVIRONMENT = "staging"
 MAILBOXES = [
-  { id = "mcptest@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_REASINGER" },
-  { id = "mcptest@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_YCD" },
+  { id = "mcptest@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_REASINGER", signature = "", folders = {} },
+  { id = "mcptest@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_YCD", signature = "", folders = {} },
 ]
 
 # The three live accounts. Deployed only from a tag (job added in C6).
@@ -26,7 +28,7 @@ main = "src/index.js"
 [env.production.vars]
 ENVIRONMENT = "production"
 MAILBOXES = [
-  { id = "scott@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_REASINGER_SCOTT" },
-  { id = "scott@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_YCD_SCOTT" },
-  { id = "founders@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_YCD_FOUNDERS" },
+  { id = "scott@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_REASINGER_SCOTT", signature = "Scott Reasinger | scott@reasinger.net | 317-460-0736 | https://linkedin.com/in/scottreasinger", folders = {} },
+  { id = "scott@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_YCD_SCOTT", signature = "Scott Reasinger | scott@yourcigardenindy.com | 317-460-0736 | yourcigardenindy.com", folders = {} },
+  { id = "founders@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_YCD_FOUNDERS", signature = "Founders | founders@yourcigardenindy.com | yourcigardenindy.com", folders = {} },
 ]

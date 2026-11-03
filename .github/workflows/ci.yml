@@ -12,6 +12,7 @@ jobs:
   unit:
     name: Unit tests and traceability
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -23,12 +24,14 @@ jobs:
       - run: node scripts/trace.mjs
       - run: node scripts/trace.mjs --chunk C0 --strict
       - run: node scripts/trace.mjs --chunk C1 --strict
+      - run: node scripts/trace.mjs --chunk C2 --strict
       - run: npx wrangler deploy --env staging --dry-run --outdir dist
 
   integration:
     name: Deploy staging and run integration suite
     needs: unit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     concurrency:
       group: staging
       cancel-in-progress: false
