@@ -35,11 +35,11 @@ REQ: REQ-9-2, REQ-10-7, REQ-18-8
 Question: Gap G7 named the plain-text rendering rules as missing, but its resolution settled only the dialect and the quote format. What does the text part contain for a markdown body?
 Options: (a) The CommonMark source as written, so `**bold**` shows its asterisks. (b) Text flattened from the parsed document, so `bold` loses its markers and a link becomes its label or URL.
 Blocking: no. Until answered the builder takes (a). REQ-10-7 re-derives an edit's body from the stored draft, and only (a) can do that without losing the formatting in the HTML part. Spark re-composes on send, so what recipients see in the text part under (a) should be confirmed by Scott.
-Resolution:
+Resolution: Scott chose (a), 2026-11-03: the text part holds the CommonMark source as written. Goes into spec v1.4 with Q4.
 
 ## Q6 (C3)
 REQ: REQ-10-9
 Question: REQ-10-9 renders "any URL" in a signature as a link. Does `yourcigardenindy.com`, with no scheme, count as a URL? It appears in the two yourcigardenindy.com signatures and would need a scheme the config does not state.
 Options: (a) Only `http://` and `https://` text is a URL, so those signatures have no link. (b) A bare domain is also a URL and links to `https://` plus the domain, with the visible text unchanged.
 Blocking: no. Until answered the builder takes (a), which adds nothing the config does not state. The visible signature text is identical either way.
-Resolution:
+Resolution: Scott chose (a), 2026-11-03: only http:// and https:// text in a signature is a link; a bare domain stays plain text. Spark itself links the bare domain with no scheme (docs/build/samples), which supports this. Goes into spec v1.4 with Q4.
