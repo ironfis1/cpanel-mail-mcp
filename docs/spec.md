@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Build specification
 
-Status: v1.2 LOCKED (2026-11-03). Changes require a new resolution and a version bump. v1.1 applied worked-example defect D-1 (REQ-18-10). v1.2 adds section 19 from build question Q2. Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
+Status: v1.3 LOCKED (2026-11-03). Changes require a new resolution and a version bump. v1.1 applied worked-example defect D-1 (REQ-18-10). v1.2 added section 19 from build question Q2. v1.3 adds REQ-19-2 from build question Q3. Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
 
 ## 0. How to read this spec
 
@@ -507,3 +507,4 @@ Each requirement below cites `[Gap Gn]`, the resolved entry in section 17.
 ## 19. Requirements from build questions
 
 - **REQ-19-1** When more than one folder carries the same SPECIAL-USE flag, resolving that logical name is an error that asks for a config override; the server never picks one. [Build question Q2]
+- **REQ-19-2** A refused IMAP login counts as an authentication failure (REQ-4-12) only when the refusal carries the response code AUTHENTICATIONFAILED or no response code. A refusal carrying any other response code (for example UNAVAILABLE or LIMIT) is a connection-class failure: that account fails for the rest of the request, is not retried, and the error names the server's response code instead of telling the caller to check the secret. [Build question Q3]

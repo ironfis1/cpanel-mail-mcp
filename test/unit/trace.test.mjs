@@ -11,11 +11,11 @@ function trace(...args) {
   return spawnSync(process.execPath, [script, ...args], { encoding: "utf8" });
 }
 
-test("REQ-14-1: trace.mjs finds exactly 277 REQs in the real spec", () => {
+test("REQ-14-1: trace.mjs finds exactly 278 REQs in the real spec", () => {
   const { status, stdout } = trace();
   assert.equal(status, 0, stdout);
-  assert.match(stdout, /^Spec: 277 REQs/m);
-  assert.match(stdout, /^Matrix: 277 rows/m);
+  assert.match(stdout, /^Spec: 278 REQs/m);
+  assert.match(stdout, /^Matrix: 278 rows/m);
 });
 
 test("REQ-14-1: every C0 row is filled and covered", () => {
