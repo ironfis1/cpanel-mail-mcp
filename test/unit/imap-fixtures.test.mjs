@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { fixtureMessage, FIXTURE_MESSAGE_ID, LARGE_BYTES, record, runSequence } from "../../scripts/record-fixtures.mjs";
 import { ImapClient } from "../../src/imap/client.js";
@@ -23,7 +24,7 @@ async function replay(dir) {
 const NOT_RECORDED = "no recorded fixtures yet: Scott runs scripts/record-fixtures.mjs (see README)";
 
 for (const host of ["server128", "server223"]) {
-  const dir = new URL(`../fixtures/imap/${host}/`, import.meta.url);
+  const dir = fileURLToPath(new URL(`../fixtures/imap/${host}/`, import.meta.url));
   const skip = existsSync(dir) ? false : NOT_RECORDED;
 
   test(`REQ-14-6: recorded ${host} session replays through the client`, { skip }, async () => {
@@ -64,7 +65,7 @@ for (const host of ["server128", "server223"]) {
   test(`REQ-14-6: recorded ${host} fixtures hold no credentials or live mailbox data`, { skip }, () => {
     const live = ["scott@reasinger.net", "scott@yourcigardenindy.com", "founders@yourcigardenindy.com", "sreasinger@gmail.com"];
     for (const name of readdirSync(dir)) {
-      const text = readFileSync(new URL(name, dir), "latin1");
+      const text = readFileSync(join(dir, name), "latin1");
       for (const address of live) assert.ok(!text.includes(address), `${name} names ${address}`);
       assert.doesNotMatch(text, /AUTHENTICATE PLAIN/, name);
     }
