@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Build specification
 
-Status: v1.1 LOCKED (2026-11-01). Changes require a new resolution and a version bump. v1.1 applies worked-example defect D-1 (REQ-18-10). Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
+Status: v1.2 LOCKED (2026-11-03). Changes require a new resolution and a version bump. v1.1 applied worked-example defect D-1 (REQ-18-10). v1.2 adds section 19 from build question Q2. Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
 
 ## 0. How to read this spec
 
@@ -8,7 +8,7 @@ Status: v1.1 LOCKED (2026-11-01). Changes require a new resolution and a version
 - Every requirement ends with one or more citation tags. `[RB-XX-n]` cites a rule-base entry. `[Resolution #n]` cites the Resolution field of ambiguity-log entry n.
 - Where a Resolution overrides or refines a rule-base entry, the Resolution wins and the tag reads, for example, `[RB-FU-6, overridden by Resolution #32]` or `[RB-SG-1, refined by Resolution #2]`.
 - "The server" means the cpanel-mail-mcp Cloudflare Worker. "The skills" means email-crap-filter, get-in-the-room and gatekeeper-panel.
-- Section 17 lists gaps found while writing this spec, each now resolved by Scott. Section 18 turns those resolutions into requirements tagged `[Gap Gn]`. A tag `[Worked example D-n]` cites a defect found and fixed in docs/worked-examples.md.
+- Section 17 lists gaps found while writing this spec, each now resolved by Scott. Section 18 turns those resolutions into requirements tagged `[Gap Gn]`. A tag `[Build question Qn]` cites a question raised during the build and resolved by Scott in docs/build/spec-questions.md. A tag `[Worked example D-n]` cites a defect found and fixed in docs/worked-examples.md.
 
 ## 1. Scope and non-goals
 
@@ -503,3 +503,7 @@ Each requirement below cites `[Gap Gn]`, the resolved entry in section 17.
 - **REQ-18-11** At cutover, get-in-the-room touch 7 passes `to: [<contact address>]` on the forward, using the address it already uses to find the original. [Gap G10]
 - **REQ-18-12** OAuth grant storage and secret names use workers-oauth-provider defaults; the README documents each secret and binding name and the revocation procedure. [Gap G11]
 - **REQ-18-13** Two-factor on the dedicated Cloudflare account is satisfied by a mobile authenticator app; a hardware key is added later as an additional factor and is not a deploy prerequisite. This supersedes the hardware-key wording in REQ-2-17, REQ-2-18 and REQ-3-11. [Gap G12]
+
+## 19. Requirements from build questions
+
+- **REQ-19-1** When more than one folder carries the same SPECIAL-USE flag, resolving that logical name is an error that asks for a config override; the server never picks one. [Build question Q2]

@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Build plan
 
-Builds to spec v1.1 (git tag `spec-v1.1`). The plan adds no requirements.
+Builds to spec v1.2 (git tag `spec-v1.2`). The plan adds no requirements.
 
 ## Roles
 
@@ -23,7 +23,7 @@ Builds to spec v1.1 (git tag `spec-v1.1`). The plan adds no requirements.
 |---|---|---|---|
 | C0 | Scaffolding, CI, traceability check | 7 | Cloudflare API token and two GitHub secrets; staging secrets |
 | C1 | IMAP client on cloudflare:sockets; spike retired | 19 | Run fixture recorder once; confirm spike Worker deleted |
-| C2 | Accounts, folder resolution, filter grammar, message IDs | 48 | None |
+| C2 | Accounts, folder resolution, filter grammar, message IDs | 49 | None |
 | C3 | Header decoding, MIME, CommonMark, quoting, signatures | 19 | None |
 | C4 | MCP server and read tools on staging | 44 | Seed the two test mailboxes with a few emails |
 | C5 | Write tools: action and draft | 45 | Spark check on desktop and laptop |
@@ -32,7 +32,7 @@ Builds to spec v1.1 (git tag `spec-v1.1`). The plan adds no requirements.
 | SKILL | Skill updates for email-crap-filter, get-in-the-room, gatekeeper-panel | 45 | Approve the proposed skill updates |
 | C7 | Source document corrections, release tag | 8 | Confirm acceptance passed |
 
-Total: 276 requirements, each owned by exactly one chunk (`docs/build/traceability.md`).
+Total: 277 requirements, each owned by exactly one chunk (`docs/build/traceability.md`).
 
 ACC and SKILL are not Claude Code chunks. The skills are Scott's claude.ai skills, so their updates are proposed in claude.ai for Scott to approve, and acceptance needs the claude.ai connector and Spark side by side. For those two, Claude is the author, so independent verification is a fresh reviewer agent that has not seen the work, plus Scott.
 

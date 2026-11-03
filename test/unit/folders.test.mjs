@@ -108,7 +108,7 @@ test("REQ-5-4: no name match is an error that asks for an override", () => {
   assert.throws(() => new FolderMap([folder("INBOX")]).path("Sent"), /no folder found for Sent.*config override/);
 });
 
-test("REQ-5-4: several folders with one flag is an error asking for an override (spec question Q2)", () => {
+test("REQ-5-4 REQ-19-1: several folders with one flag is an error asking for an override (spec question Q2)", () => {
   const map = new FolderMap([folder("INBOX.A", "\\Sent"), folder("INBOX.B", "\\Sent")]);
   assert.throws(() => map.path("Sent"), /several folders carry \\sent for Sent; set a config override/);
 });
