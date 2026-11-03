@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Build specification
 
-Status: v1.3 LOCKED (2026-11-03). Changes require a new resolution and a version bump. v1.1 applied worked-example defect D-1 (REQ-18-10). v1.2 added section 19 from build question Q2. v1.3 adds REQ-19-2 from build question Q3. Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
+Status: v1.4 LOCKED (2026-11-03). Changes require a new resolution and a version bump. v1.1 applied worked-example defect D-1 (REQ-18-10). v1.2 added section 19 from build question Q2. v1.3 added REQ-19-2 from build question Q3. v1.4 adds REQ-19-3 to REQ-19-5 from build questions Q4 to Q6. Written from docs/rule-base.md (95 entries) and docs/ambiguity-log.md (110 resolved entries), plus the 12 spec-writing gaps Scott resolved (section 17).
 
 ## 0. How to read this spec
 
@@ -508,3 +508,6 @@ Each requirement below cites `[Gap Gn]`, the resolved entry in section 17.
 
 - **REQ-19-1** When more than one folder carries the same SPECIAL-USE flag, resolving that logical name is an error that asks for a config override; the server never picks one. [Build question Q2]
 - **REQ-19-2** A refused IMAP login counts as an authentication failure (REQ-4-12) only when the refusal carries the response code AUTHENTICATIONFAILED or no response code. A refusal carrying any other response code (for example UNAVAILABLE or LIMIT) is a connection-class failure: that account fails for the rest of the request, is not retried, and the error names the server's response code instead of telling the caller to check the secret. [Build question Q3]
+- **REQ-19-3** Quoted originals in reply and reply-all drafts match the Spark reply sample in docs/build/samples/spark-reply.eml: in the text part, the attribution line "On <Mon D, YYYY, h:mm AM/PM -ZZZZ>, <Display Name> <address>, wrote:" directly under the signature, then each original line prefixed "> "; in the HTML part, the attribution and a `<blockquote type="cite">` holding the original. Forward drafts match the raw Sent copy of a Spark forward recorded from a test mailbox. [Build question Q4]
+- **REQ-19-4** The text part of a draft holds the CommonMark source as written; it is not flattened. [Build question Q5]
+- **REQ-19-5** Only `http://` and `https://` text in a signature is rendered as a link; a bare domain stays plain text. [Build question Q6]

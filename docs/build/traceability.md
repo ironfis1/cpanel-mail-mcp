@@ -1,6 +1,6 @@
 # Traceability matrix
 
-Every requirement in docs/spec.md (tag spec-v1.3) is owned by exactly one chunk. Claude Code fills the "Verified by" column with the test file and test name (or the manual check) as it builds. A chunk gate cannot pass while any of its rows is blank.
+Every requirement in docs/spec.md (tag spec-v1.4) is owned by exactly one chunk. Claude Code fills the "Verified by" column with the test file and test name (or the manual check) as it builds. A chunk gate cannot pass while any of its rows is blank.
 
 | REQ | Chunk | Method | Verified by | Status |
 |---|---|---|---|---|
@@ -282,3 +282,6 @@ Every requirement in docs/spec.md (tag spec-v1.3) is owned by exactly one chunk.
 | REQ-18-13 | C6 | manual (Scott) | | open |
 | REQ-19-1 | C2 | automated test | test/unit/folders.test.mjs: "REQ-5-4 REQ-19-1: several folders with one flag is an error asking for an override (spec question Q2)" | built |
 | REQ-19-2 | C4 | automated test | | open |
+| REQ-19-3 | C5 | automated test | | open |
+| REQ-19-4 | C5 | automated test | | open |
+| REQ-19-5 | C5 | automated test | | open |

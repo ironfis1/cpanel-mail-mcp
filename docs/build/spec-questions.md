@@ -28,18 +28,18 @@ REQ: REQ-18-8, REQ-9-11, REQ-9-18, REQ-10-8
 Question: REQ-18-8 and Gap G7 say quoted originals follow the format Spark produces, but no document records that format: not the attribution line, the `>` prefixing, the forwarded-header block, or the HTML quote markup. The fixtures hold no Spark-composed reply or forward either. The format cannot be built or tested without a sample.
 Options: (a) Scott replies to and forwards a test message from Spark on a mcptest mailbox; the raw Sent copies become fixtures and the format is built to match them. (b) Scott pastes the raw source of a real Spark reply and forward, with personal details removed, into a fixture. (c) Scott states a format directly, accepting it may differ from Spark's.
 Blocking: yes for the quote formatter only, which is not built. It blocks REQ-18-8's second sentence, and C5's reply and forward drafts until answered. Everything else in C3 is built: `composeDraftBody` takes an already formatted `quote` of `{ text, html }` and places it (REQ-10-8).
-Resolution:
+Resolution: Scott chose (a), 2026-11-03, with this route: the reply format comes from docs/build/samples/spark-reply.eml (a Spark reply captured from Gmail). Two Spark forwards sent to Gmail did not arrive, so the forward format comes from the raw Sent copy of a Spark forward already in a test mailbox (mcptest@yourcigardenindy.com and mcptest@reasinger.net Sent folders, 2026-11-03), which C5 records as a fixture with the existing recorder. Recorded as REQ-19-3 in spec v1.4.
 
 ## Q5 (C3)
 REQ: REQ-9-2, REQ-10-7, REQ-18-8
 Question: Gap G7 named the plain-text rendering rules as missing, but its resolution settled only the dialect and the quote format. What does the text part contain for a markdown body?
 Options: (a) The CommonMark source as written, so `**bold**` shows its asterisks. (b) Text flattened from the parsed document, so `bold` loses its markers and a link becomes its label or URL.
 Blocking: no. Until answered the builder takes (a). REQ-10-7 re-derives an edit's body from the stored draft, and only (a) can do that without losing the formatting in the HTML part. Spark re-composes on send, so what recipients see in the text part under (a) should be confirmed by Scott.
-Resolution: Scott chose (a), 2026-11-03: the text part holds the CommonMark source as written. Goes into spec v1.4 with Q4.
+Resolution: Scott chose (a), 2026-11-03: the text part holds the CommonMark source as written. Recorded in spec v1.4.
 
 ## Q6 (C3)
 REQ: REQ-10-9
 Question: REQ-10-9 renders "any URL" in a signature as a link. Does `yourcigardenindy.com`, with no scheme, count as a URL? It appears in the two yourcigardenindy.com signatures and would need a scheme the config does not state.
 Options: (a) Only `http://` and `https://` text is a URL, so those signatures have no link. (b) A bare domain is also a URL and links to `https://` plus the domain, with the visible text unchanged.
 Blocking: no. Until answered the builder takes (a), which adds nothing the config does not state. The visible signature text is identical either way.
-Resolution: Scott chose (a), 2026-11-03: only http:// and https:// text in a signature is a link; a bare domain stays plain text. Spark itself links the bare domain with no scheme (docs/build/samples), which supports this. Goes into spec v1.4 with Q4.
+Resolution: Scott chose (a), 2026-11-03: only http:// and https:// text in a signature is a link; a bare domain stays plain text. Spark itself links the bare domain with no scheme (docs/build/samples), which supports this. Recorded in spec v1.4.
