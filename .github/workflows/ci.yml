@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit tests and traceability
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: node scripts/trace.mjs
+      - run: node scripts/trace.mjs --chunk C0 --strict
+      - run: npx wrangler deploy --env staging --dry-run --outdir dist
+
+  integration:
+    name: Deploy staging and run integration suite
+    needs: unit
+    runs-on: ubuntu-latest
+    concurrency:
+      group: staging
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      STAGING_TOKEN: ${{ secrets.STAGING_TOKEN }}
+    steps:
+      - name: Check for secrets
+        id: gate
+        run: |
+          if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            message="Skipping staging deploy and integration suite: CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set for this run."
+            echo "::notice::$message"
+            echo "$message" >> "$GITHUB_STEP_SUMMARY"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$STAGING_TOKEN" ]; then
+            echo "token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "token=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.deploy == 'true'
+        uses: actions/checkout@v5
+      - if: steps.gate.outputs.deploy == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - if: steps.gate.outputs.deploy == 'true'
+        run: npm ci
+      - if: steps.gate.outputs.deploy == 'true'
+        run: npx wrangler deploy --env staging
+      - name: Note skipped integration suite
+        if: steps.gate.outputs.deploy == 'true' && steps.gate.outputs.token != 'true'
+        run: |
+          message="Staging deployed. Skipping integration suite: the STAGING_TOKEN repo secret is not set."
+          echo "::notice::$message"
+          echo "$message" >> "$GITHUB_STEP_SUMMARY"
+      - if: steps.gate.outputs.deploy == 'true' && steps.gate.outputs.token == 'true'
+        run: npm run test:integration

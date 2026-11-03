@@ -32,10 +32,10 @@ Every requirement in docs/spec.md (tag spec-v1.1) is owned by exactly one chunk.
 | REQ-2-14 | C2 | automated test | | open |
 | REQ-2-15 | C2 | manual (Scott) | | open |
 | REQ-2-16 | C6 | README check | | open |
-| REQ-2-17 | C0 | manual (Scott) | | open |
-| REQ-2-18 | C0 | manual (Scott) | | open |
+| REQ-2-17 | C0 | manual (Scott) | Manual: in the Cloudflare dashboard, Scott confirms the Worker account is owned by scott@reasinger.net (subdomain reasinger-ops), has 2FA on, and is separate from the sreasinger@gmail.com and scott@yourcigardenindy.com accounts. docs/prerequisites.md records owner and 2FA as done, not the separation. | needs Scott |
+| REQ-2-18 | C0 | manual (Scott) | Manual: Scott confirms the spike account (scott@reasinger.net, reasinger-ops) is the dedicated production account. docs/prerequisites.md records it as done. wrangler.toml configures Workers only; no other platform exists in the repo. | needs Scott |
 | REQ-2-19 | C2 | automated test | | open |
-| REQ-2-20 | C0 | doc check | | open |
+| REQ-2-20 | C0 | doc check | Doc check: docs/prerequisites.md row "Workers Paid plan on that account" records the recommended plan as active (Done 2026-11-02); README "Hosting" states it. CI has no bundle size gate. | built |
 | REQ-3-1 | C6 | automated test | | open |
 | REQ-3-2 | C6 | automated test | | open |
 | REQ-3-3 | C6 | automated test | | open |
@@ -195,10 +195,10 @@ Every requirement in docs/spec.md (tag spec-v1.1) is owned by exactly one chunk.
 | REQ-13-5 | C6 | automated test | | open |
 | REQ-13-6 | C6 | README check | | open |
 | REQ-13-7 | C1 | README check | | open |
-| REQ-14-1 | C0 | automated test | | open |
-| REQ-14-2 | C0 | automated test | | open |
-| REQ-14-3 | C0 | automated test | | open |
-| REQ-14-4 | C0 | automated test | | open |
+| REQ-14-1 | C0 | automated test | test/unit/trace.test.mjs: "REQ-14-1: trace.mjs finds exactly 276 REQs in the real spec", "REQ-14-1: every C0 row is filled and covered" and the --strict fixture tests; test/unit/smoke.test.mjs: "REQ-14-1: smoke: the node --test runner executes this test" | built |
+| REQ-14-2 | C0 | automated test | test/unit/config.test.mjs: "REQ-14-2: staging config holds only dedicated mcptest mailboxes, no live account" and the other REQ-14-2 tests there; test/unit/harness.test.mjs: "REQ-14-2: the harness refuses to call any origin but staging"; test/unit/worker.test.mjs: "REQ-14-2: production never accepts STAGING_TOKEN, even when the secret is set"; test/integration/staging-worker.test.mjs once secrets exist | built |
+| REQ-14-3 | C0 | automated test | test/unit/config.test.mjs: "REQ-14-3: the cPanel A test mailbox is mcptest@reasinger.net on server128"; test/integration/staging-worker.test.mjs per-mailbox test once secrets exist | built |
+| REQ-14-4 | C0 | automated test | test/unit/config.test.mjs: "REQ-14-4: the cPanel B test mailbox is mcptest@yourcigardenindy.com on server223"; test/unit/harness.test.mjs: "REQ-14-3 REQ-14-4: the integration suite runs on both test mailboxes". C0 proves the mailbox and the per-mailbox harness only; folder, SPECIAL-USE, Archive and MOVE tests arrive in C2 and C5 | built |
 | REQ-14-5 | C1 | automated test | | open |
 | REQ-14-6 | C1 | automated test | | open |
 | REQ-14-7 | C1 | automated test | | open |

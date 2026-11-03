@@ -1,0 +1,32 @@
+# Both environments live in the scott@reasinger.net Cloudflare account (workers.dev
+# subdomain reasinger-ops). The account is selected by CLOUDFLARE_ACCOUNT_ID.
+# No top-level main: a bare `wrangler deploy` must fail instead of hitting production
+# (wrangler would otherwise take the Worker name from package.json).
+# Passwords are never here. Each secret_ref names a secret set with `wrangler secret put`.
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Test mailboxes only. See docs/prerequisites.md.
+[env.staging]
+name = "cpanel-mail-mcp-staging"
+main = "src/index.js"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+MAILBOXES = [
+  { id = "mcptest@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_REASINGER" },
+  { id = "mcptest@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_YCD" },
+]
+
+# The three live accounts. Deployed only from a tag (job added in C6).
+[env.production]
+name = "cpanel-mail-mcp"
+main = "src/index.js"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+MAILBOXES = [
+  { id = "scott@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_REASINGER_SCOTT" },
+  { id = "scott@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_YCD_SCOTT" },
+  { id = "founders@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_YCD_FOUNDERS" },
+]
