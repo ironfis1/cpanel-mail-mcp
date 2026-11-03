@@ -15,3 +15,10 @@ Question: REQ-5-4 covers several folders matching by name, but nothing covers se
 Options: (a) Error asking for a config override, matching REQ-5-4. (b) Take the first one LIST returns. (c) Prefer the one whose name also matches.
 Blocking: no. Neither real host has this case. Until answered the resolver takes (a), the only option that cannot pick the wrong folder.
 Resolution: Scott chose (a). Several folders with the same SPECIAL-USE flag are an error asking for a config override, as the resolver already does.
+
+## Q3 (raised by the verifier after the C2 merge)
+REQ: REQ-4-12, REQ-12-3
+Question: On 2026-11-03 the staging integration run for commit 2c0918e failed on both test mailboxes with "IMAP authentication failed ... check the secret", one minute after the previous run passed with the same secrets. A re-run minutes later passed with no change. The likely cause is the mail server refusing a login for a reason other than a bad password (for example a per-user connection limit while the previous run's sessions were still closing). The client treats every refused AUTHENTICATE as an auth failure (a C1 builder choice), so the account is disabled for the request and the message tells Scott to check a secret that is fine. In production the same thing could happen at 6am and send Scott after the wrong problem.
+Options: (a) Keep as is: any refused login is an auth failure. (b) Treat only a refusal carrying the IMAP response code AUTHENTICATIONFAILED (or no response code) as an auth failure; a refusal carrying another code (for example UNAVAILABLE or LIMIT) is a connection-class failure: the account fails for this request, is not retried, and the message names the server's response code instead of the secret. (c) As (b), plus one retry after a short pause for the non-auth case.
+Blocking: no for C3. Should be answered before C4, which builds availability and the read tools.
+Resolution:
