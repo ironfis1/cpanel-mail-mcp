@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test \"test/unit/**/*.test.mjs\"",
-    "test:integration": "node --test \"test/integration/**/*.test.mjs\"",
+    "test": "node --test --test-timeout=20000 \"test/unit/**/*.test.mjs\"",
+    "test:integration": "node --test --test-timeout=20000 \"test/integration/**/*.test.mjs\"",
     "trace": "node scripts/trace.mjs",
     "check": "wrangler deploy --env staging --dry-run --outdir dist",
     "deploy:staging": "wrangler deploy --env staging"

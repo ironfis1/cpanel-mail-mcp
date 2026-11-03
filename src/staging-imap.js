@@ -1,6 +1,9 @@
 // Staging only, behind STAGING_TOKEN, so the integration suite can run the client against the real
 // hosts. Removed with STAGING_TOKEN in C6. Writes a synthetic message and removes it again, so it
 // refuses any mailbox that is not a dedicated test mailbox.
+import { loadRegistry } from "./accounts.js";
+import { translateFilter } from "./filter.js";
+import { LOGICAL_NAMES } from "./folders.js";
 import { quote } from "./imap/client.js";
 import { RequestSessions } from "./imap/session.js";
 
@@ -33,14 +36,46 @@ function testMessage(messageId) {
   ].join("\r\n");
 }
 
+const filterMessage = (from, subject) =>
+  ["From: " + from, "To: mcptest@example.invalid", "Subject: " + subject, "Date: Mon, 02 Nov 2026 12:00:00 +0000", "", "filter check", ""].join("\r\n");
+
+// Appends synthetic senders, runs real searches through the translator, and removes them again.
+async function filterCheck(client, drafts) {
+  const mark = crypto.randomUUID();
+  const daemon = await client.append(drafts, filterMessage('"MAILER-DAEMON" <bounces@example.invalid>', `daemon ${mark}`), ["\\Draft"]);
+  const postmaster = await client.append(drafts, filterMessage("postmaster@example.invalid", `=?UTF-8?B?${btoa("caf\u00c3\u00a9")}?= ${mark}`), ["\\Draft", "\\Seen"]);
+  const uids = [daemon.uid, postmaster.uid];
+  try {
+    await client.select(drafts);
+    const matched = async (filter) => {
+      const found = await client.uidSearch(translateFilter(filter));
+      return { daemon: found.includes(daemon.uid), postmaster: found.includes(postmaster.uid) };
+    };
+    return {
+      fromDaemon: await matched("from:mailer-daemon newer_than:3d"),
+      fromPostmaster: await matched("from:postmaster newer_than:3d"),
+      olderThan: await matched("from:mailer-daemon older_than:3d"),
+      subjectAnd: await matched(`subject:daemon subject:${mark}`),
+      nonAscii: await matched(`subject:caf\u00e9 subject:${mark}`),
+      unread: await matched(`is:unread subject:${mark}`),
+      read: await matched(`is:read subject:${mark}`),
+      bareWord: await matched(`${mark} filter`),
+    };
+  } finally {
+    await client.uidStore(uids.join(","), "+", ["\\Deleted"]);
+    await client.uidExpunge(uids.join(","));
+  }
+}
+
 async function check(client) {
   const capabilities = [...client.capabilities].sort();
   const folders = await client.list();
-  const path = (flag) => folders.find((f) => f.specialUse === flag)?.path;
-  const drafts = path("\\Drafts");
-  const trash = path("\\Trash");
+  const logical = Object.fromEntries(LOGICAL_NAMES.map((name) => [name, client.folders.path(name)]));
+  const drafts = logical.Drafts;
+  const trash = logical.Trash;
 
-  const inbox = await client.select("INBOX");
+  const inbox = await client.select(logical.Inbox);
+  const filters = await filterCheck(client, drafts);
   const selected = await client.select(drafts);
 
   const messageId = `<check-${crypto.randomUUID()}@cpanel-mail-mcp.invalid>`;
@@ -64,6 +99,8 @@ async function check(client) {
   return {
     capabilities,
     folders: folders.map(({ path: p, specialUse }) => ({ path: p, specialUse })),
+    logical,
+    filters,
     inboxUidValidity: inbox.uidValidity,
     draftsSelected: selected.uidValidity !== null,
     appended: appended.uid !== null,
@@ -87,7 +124,7 @@ export async function imapCheck(env, connect) {
   }
   const sessions = new RequestSessions({ connect, env });
   try {
-    return await sessions.runEach(env.MAILBOXES, check);
+    return await sessions.runEach(loadRegistry(env.MAILBOXES), check);
   } finally {
     await sessions.closeAll();
   }

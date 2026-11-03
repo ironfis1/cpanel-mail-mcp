@@ -2,7 +2,9 @@
 
 Cloudflare Worker remote MCP server for IMAP access to three cPanel business mailboxes. Build spec: `docs/spec.md` (tag `spec-v1.1`). Build process: `docs/build-plan.md`.
 
-Status: scaffolding and the IMAP client (`src/imap/`, chunk C1). No MCP tools yet. This README is a stub until C6.
+Status: scaffolding, the IMAP client (`src/imap/`, chunk C1), and accounts, folders, filters and message IDs (chunk C2). No MCP tools yet. This README is a stub until C6.
+
+The three business mailboxes are read directly over IMAP, not through Gmail. The cPanel forwarders to Gmail were retired on 2026-10-26.
 
 ## Hosting
 
@@ -23,6 +25,7 @@ npm test                      # unit tests
 node scripts/trace.mjs        # REQ coverage per chunk
 node scripts/trace.mjs --chunk C0 --strict
 node scripts/trace.mjs --chunk C1 --strict
+node scripts/trace.mjs --chunk C2 --strict
 npm run check                 # wrangler deploy --env staging --dry-run
 ```
 
@@ -33,6 +36,12 @@ npm run test:integration
 ```
 
 `/imap-check` on the staging Worker runs the IMAP client against both test mailboxes. It appends a synthetic message to Drafts, then moves and removes it.
+
+## Account registry and filters
+
+The registry is `MAILBOXES` in `wrangler.toml`, one list per environment. To override a discovered folder, set its logical name in that entry's `folders`, for example `folders = { Archive = "INBOX.Old" }`.
+
+`newer_than:Nd` uses date-granular IMAP SINCE, with dates in America/Indianapolis. A result can be up to one day older than N days. This is accepted because it never drops mail.
 
 ## Record IMAP fixtures
 

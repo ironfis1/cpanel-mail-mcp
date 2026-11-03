@@ -3,6 +3,7 @@
 // request; nothing here outlives it, so there are no persistent connections and no pool.
 import { ImapClient } from "./client.js";
 import { ImapError } from "./errors.js";
+import { FolderMap } from "../folders.js";
 
 async function openSession(connect, account, password) {
   let socket;
@@ -17,6 +18,8 @@ async function openSession(connect, account, password) {
     await client.greeting();
     await client.login(account.id, password);
     await client.capability();
+    // Discovered at every session open; there is no folder cache.
+    client.folders = new FolderMap(await client.list(), account.folders);
     return client;
   } catch (error) {
     await client.close();
