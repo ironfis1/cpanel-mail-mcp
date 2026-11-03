@@ -2,7 +2,7 @@
 
 Cloudflare Worker remote MCP server for IMAP access to three cPanel business mailboxes. Build spec: `docs/spec.md` (tag `spec-v1.1`). Build process: `docs/build-plan.md`.
 
-Status: scaffolding only (chunk C0). No product behavior yet. This README is a stub until C6.
+Status: scaffolding and the IMAP client (`src/imap/`, chunk C1). No MCP tools yet. This README is a stub until C6.
 
 ## Hosting
 
@@ -22,6 +22,7 @@ npm ci
 npm test                      # unit tests
 node scripts/trace.mjs        # REQ coverage per chunk
 node scripts/trace.mjs --chunk C0 --strict
+node scripts/trace.mjs --chunk C1 --strict
 npm run check                 # wrangler deploy --env staging --dry-run
 ```
 
@@ -30,6 +31,26 @@ The integration suite calls the deployed staging Worker over HTTPS. It skips wit
 ```
 npm run test:integration
 ```
+
+`/imap-check` on the staging Worker runs the IMAP client against both test mailboxes. It appends a synthetic message to Drafts, then moves and removes it.
+
+## Record IMAP fixtures
+
+`scripts/record-fixtures.mjs` captures real server responses from both test mailboxes into `test/fixtures/imap/` for the parser tests (REQ-14-6). It appends one synthetic message, fetches only that message and removes it. It records server bytes only, and writes nothing if a response holds a password or a live address.
+
+In PowerShell, from the repo root. Each prompt hides what you type:
+
+```
+$env:IMAP_PASS_MCPTEST_REASINGER = [Net.NetworkCredential]::new('', (Read-Host -AsSecureString 'mcptest@reasinger.net password')).Password
+$env:IMAP_PASS_MCPTEST_YCD = [Net.NetworkCredential]::new('', (Read-Host -AsSecureString 'mcptest@yourcigardenindy.com password')).Password
+node scripts/record-fixtures.mjs
+Remove-Item Env:IMAP_PASS_MCPTEST_REASINGER, Env:IMAP_PASS_MCPTEST_YCD
+npm test
+```
+
+## Clear a cPHulk block
+
+Too many failed logins can make cPanel's cPHulk block the server's address. Workers has no fixed egress IP to whitelist, so a block is cleared by hand in the cPanel or WHM of the affected host. The server disables an account for the rest of the request after an authentication failure and never retries, so fix the secret before trying again.
 
 ## Deploy staging
 

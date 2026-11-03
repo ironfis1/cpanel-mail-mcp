@@ -1,7 +1,0 @@
-{
-  "name": "cpanel-mail-mcp-spike",
-  "private": true,
-  "type": "module",
-  "scripts": { "deploy": "wrangler deploy", "check": "wrangler deploy --dry-run --outdir dist" },
-  "devDependencies": { "wrangler": "^4.0.0" }
-}

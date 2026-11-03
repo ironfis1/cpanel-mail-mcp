@@ -1,5 +1,7 @@
-// C0 skeleton: no product behavior. Staging answers the integration harness behind the
-// temporary STAGING_TOKEN bearer (removed in C6). Every other request gets 401.
+// Skeleton: no product behavior. Staging answers the integration harness behind the temporary
+// STAGING_TOKEN bearer (removed in C6). Every other request gets 401.
+import { imapCheck } from "./staging-imap.js";
+
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
@@ -24,6 +26,10 @@ async function stagingAuthorized(request, env) {
 export default {
   async fetch(request, env) {
     if (!(await stagingAuthorized(request, env))) return json({ error: "unauthorized" }, 401);
+    if (new URL(request.url).pathname === "/imap-check") {
+      const { connect } = await import("./imap/cloudflare.js");
+      return json(await imapCheck(env, connect));
+    }
     return json({
       environment: env.ENVIRONMENT,
       mailboxes: env.MAILBOXES.map(({ id, host }) => ({ id, host })),

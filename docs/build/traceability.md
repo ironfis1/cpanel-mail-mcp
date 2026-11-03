@@ -47,19 +47,19 @@ Every requirement in docs/spec.md (tag spec-v1.1) is owned by exactly one chunk.
 | REQ-3-9 | C5 | automated test | | open |
 | REQ-3-10 | C6 | automated test | | open |
 | REQ-3-11 | C6 | manual (Scott) | | open |
-| REQ-4-1 | C1 | automated test | | open |
-| REQ-4-2 | C1 | automated test | | open |
-| REQ-4-3 | C1 | automated test | | open |
-| REQ-4-4 | C1 | automated test | | open |
-| REQ-4-5 | C1 | automated test | | open |
-| REQ-4-6 | C1 | automated test | | open |
-| REQ-4-7 | C1 | automated test | | open |
-| REQ-4-8 | C1 | automated test | | open |
-| REQ-4-9 | C1 | automated test | | open |
-| REQ-4-10 | C1 | automated test | | open |
-| REQ-4-11 | C1 | automated test | | open |
-| REQ-4-12 | C1 | automated test | | open |
-| REQ-4-13 | C1 | README check | | open |
+| REQ-4-1 | C1 | automated test | test/unit/imap-client.test.mjs: "REQ-4-1: the client runs on cloudflare:sockets and imapflow is not a dependency"; test/integration/imap.test.mjs: "REQ-4-1 REQ-4-2 REQ-4-3: login, LIST and SELECT work on <host> from the Worker" | built |
+| REQ-4-2 | C1 | automated test | test/unit/imap-client.test.mjs: "REQ-4-2: login is AUTHENTICATE PLAIN with an initial response, so the password needs no escaping"; test/integration/imap.test.mjs: per-host login test | built |
+| REQ-4-3 | C1 | automated test | test/unit/imap-client.test.mjs: "REQ-4-3 REQ-4-6 REQ-14-7: full command sequence with LITERAL+ on" and "off", and the other REQ-4-3 tests there; test/unit/imap-parser.test.mjs: REQ-4-3 tests; test/integration/imap.test.mjs: per-host round trip | built |
+| REQ-4-4 | C1 | automated test | test/unit/imap-client.test.mjs: the three REQ-4-4 tests (CAPABILITY, BODYSTRUCTURE, partial); test/unit/imap-parser.test.mjs: REQ-4-4 tests; test/integration/imap.test.mjs: per-host round trip | built |
+| REQ-4-5 | C1 | automated test | test/unit/imap-client.test.mjs: the three REQ-4-5 tests (MOVE, COPY fallback, refusal); test/unit/imap-parser.test.mjs: COPYUID test; test/integration/imap.test.mjs: per-host move test. The real hosts advertise MOVE, so only the fake exercises the fallback | built |
+| REQ-4-6 | C1 | automated test | test/unit/imap-client.test.mjs: "REQ-4-3 REQ-4-6 REQ-14-7: full command sequence with LITERAL+ on" and "off"; "REQ-4-6 REQ-14-7: a literal mailbox name from LIST is read and can be selected"; the two split-chunk REQ-4-6 tests | built |
+| REQ-4-7 | C1 | automated test | test/unit/imap-timeouts.test.mjs: every "silent <step> times out" test, plus the keeps-sending, bounded-close and broken-session REQ-4-7 tests | built |
+| REQ-4-8 | C1 | automated test | test/unit/imap-timeouts.test.mjs: "REQ-4-8: the timeout values are exactly those in the spec" and every silent-step test, each proved pending at value minus 1 ms and failed at the value | built |
+| REQ-4-9 | C1 | automated test | test/unit/imap-timeouts.test.mjs: "REQ-4-9 REQ-14-8: a timeout fails that account loudly and the other host still answers", "REQ-4-9: an account that timed out stays failed for the request without a second connection"; test/unit/imap-sessions.test.mjs: REQ-4-9 test | built |
+| REQ-4-10 | C1 | automated test | test/unit/imap-sessions.test.mjs: the REQ-4-10 tests (lazy, one per account, closeAll, separate requests) | built |
+| REQ-4-11 | C1 | automated test | test/unit/imap-sessions.test.mjs: the REQ-4-11 tests (parallel across hosts, sequential within a host, failure does not block) | built |
+| REQ-4-12 | C1 | automated test | test/unit/imap-sessions.test.mjs: "REQ-4-12 REQ-12-3 REQ-14-7: auth failure disables the account for the request, names the secret, never retries" and the other REQ-4-12 tests; test/unit/imap-client.test.mjs: "REQ-4-12 REQ-14-7: a bad password fails with code auth and no server text or password" | built |
+| REQ-4-13 | C1 | README check | README check: README "Clear a cPHulk block" states there is no egress IP to whitelist and the block is cleared by hand | built |
 | REQ-5-1 | C2 | automated test | | open |
 | REQ-5-2 | C2 | automated test | | open |
 | REQ-5-3 | C2 | automated test | | open |
@@ -179,7 +179,7 @@ Every requirement in docs/spec.md (tag spec-v1.1) is owned by exactly one chunk.
 | REQ-11-4 | C3 | automated test | | open |
 | REQ-12-1 | C4 | automated test | | open |
 | REQ-12-2 | C4 | automated test | | open |
-| REQ-12-3 | C1 | automated test | | open |
+| REQ-12-3 | C1 | automated test | test/unit/imap-sessions.test.mjs: "REQ-4-12 REQ-12-3 REQ-14-7: auth failure disables the account for the request, names the secret, never retries" and the other REQ-12-3 tests | built |
 | REQ-12-4 | SKILL | skill review | | open |
 | REQ-12-5 | SKILL | skill review | | open |
 | REQ-12-6 | SKILL | skill review | | open |
@@ -194,15 +194,15 @@ Every requirement in docs/spec.md (tag spec-v1.1) is owned by exactly one chunk.
 | REQ-13-4 | C6 | automated test | | open |
 | REQ-13-5 | C6 | automated test | | open |
 | REQ-13-6 | C6 | README check | | open |
-| REQ-13-7 | C1 | README check | | open |
+| REQ-13-7 | C1 | README check | README check: README "Clear a cPHulk block" | built |
 | REQ-14-1 | C0 | automated test | test/unit/trace.test.mjs: "REQ-14-1: trace.mjs finds exactly 276 REQs in the real spec", "REQ-14-1: every C0 row is filled and covered" and the --strict fixture tests; test/unit/smoke.test.mjs: "REQ-14-1: smoke: the node --test runner executes this test" | built |
 | REQ-14-2 | C0 | automated test | test/unit/config.test.mjs: "REQ-14-2: staging config holds only dedicated mcptest mailboxes, no live account" and the other REQ-14-2 tests there; test/unit/harness.test.mjs: "REQ-14-2: the harness refuses to call any origin but staging"; test/unit/worker.test.mjs: "REQ-14-2: production never accepts STAGING_TOKEN, even when the secret is set"; test/integration/staging-worker.test.mjs once secrets exist | built |
 | REQ-14-3 | C0 | automated test | test/unit/config.test.mjs: "REQ-14-3: the cPanel A test mailbox is mcptest@reasinger.net on server128"; test/integration/staging-worker.test.mjs per-mailbox test once secrets exist | built |
 | REQ-14-4 | C0 | automated test | test/unit/config.test.mjs: "REQ-14-4: the cPanel B test mailbox is mcptest@yourcigardenindy.com on server223"; test/unit/harness.test.mjs: "REQ-14-3 REQ-14-4: the integration suite runs on both test mailboxes". C0 proves the mailbox and the per-mailbox harness only; folder, SPECIAL-USE, Archive and MOVE tests arrive in C2 and C5 | partial: completes in C2 and C5 |
-| REQ-14-5 | C1 | automated test | | open |
-| REQ-14-6 | C1 | automated test | | open |
-| REQ-14-7 | C1 | automated test | | open |
-| REQ-14-8 | C1 | automated test | | open |
+| REQ-14-5 | C1 | automated test | test/integration/imap.test.mjs: "REQ-14-5: record the IMAP capabilities of <host>" per host; output in the CI job summary and the PR description | built |
+| REQ-14-6 | C1 | automated test | test/unit/imap-fixtures.test.mjs: "REQ-14-6: recorded <host> ..." tests, skipped until Scott runs scripts/record-fixtures.mjs (README "Record IMAP fixtures"), then commits test/fixtures/imap/. The recorder's own REQ-14-6 tests pass today | needs Scott |
+| REQ-14-7 | C1 | automated test | test/unit/imap-client.test.mjs: LITERAL+ on and off and literal mailbox name tests; test/unit/imap-sessions.test.mjs: auth failure test; test/unit/imap-timeouts.test.mjs: silent-server tests at every step | built |
+| REQ-14-8 | C1 | automated test | test/unit/imap-timeouts.test.mjs: every "REQ-14-8: silent <step> times out" test and "REQ-4-9 REQ-14-8: a timeout fails that account loudly and the other host still answers" | built |
 | REQ-14-9 | C3 | automated test | | open |
 | REQ-14-10 | C3 | automated test | | open |
 | REQ-14-11 | C3 | automated test | | open |
