@@ -12,5 +12,9 @@
   "devDependencies": {
     "smol-toml": "^1.9.1",
     "wrangler": "^4.156.2"
+  },
+  "dependencies": {
+    "commonmark": "0.31.2",
+    "entities": "3.0.1"
   }
 }

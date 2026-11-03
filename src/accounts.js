@@ -6,6 +6,7 @@ import { LOGICAL_NAMES } from "./folders.js";
 const FIELDS = ["id", "host", "port", "secret_ref", "signature", "folders"];
 const GMAIL = /@(gmail|googlemail)\.com$/i;
 const SECRET_NAME = /^[A-Z][A-Z0-9_]*$/;
+const FORBIDDEN_IN_SIGNATURE = /sreasinger@gmail\.com/i;
 
 // Which account drafts for each purpose belong in. sreasinger@gmail.com is never used for outreach
 // and cannot be registered.
@@ -26,6 +27,7 @@ function checkEntry(entry, index) {
   if (entry.port !== 993) throw invalid(index, "port must be 993");
   if (!SECRET_NAME.test(entry.secret_ref)) throw invalid(index, "secret_ref must name a platform secret");
   if (typeof entry.signature !== "string") throw invalid(index, "signature must be a string");
+  if (FORBIDDEN_IN_SIGNATURE.test(entry.signature)) throw invalid(index, "signature must not contain sreasinger@gmail.com");
   for (const name of Object.keys(entry.folders)) {
     if (!LOGICAL_NAMES.includes(name)) throw invalid(index, `folders has unknown logical name ${name}`);
   }

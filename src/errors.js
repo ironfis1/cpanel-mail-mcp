@@ -1,6 +1,6 @@
-// Errors the server returns for bad config, folders, filters and message IDs. Separate from
+// Errors the server returns for bad config, folders, filters, message IDs and drafts. Separate from
 // ImapError, which describes the network and protocol.
-// code: config | folder | filter | id_invalid | id_not_found | id_ambiguous.
+// code: config | folder | filter | id_invalid | id_not_found | id_ambiguous | draft | signature_unset.
 export class ServerError extends Error {
   constructor(code, message) {
     super(message);
