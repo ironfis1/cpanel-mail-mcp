@@ -78,7 +78,11 @@ test("REQ-2-8: each entry has exactly the registry fields", () => {
 
 test("REQ-2-8: an empty signature in config loads as unset", () => {
   assert.equal(loadRegistry([entry({ signature: "" })])[0].signature, null);
-  assert.equal(findAccount(staging, "mcptest@reasinger.net").signature, null);
+});
+
+test("REQ-2-8: each test mailbox has the signature Scott set in spec question Q1", () => {
+  assert.equal(findAccount(staging, "mcptest@reasinger.net").signature, "mcptest | mcptest@reasinger.net | reasinger.net");
+  assert.equal(findAccount(staging, "mcptest@yourcigardenindy.com").signature, "mcptest | mcptest@yourcigardenindy.com | yourcigardenindy.com");
 });
 
 test("REQ-2-10: folder overrides are static config and must use logical names", () => {

@@ -16,8 +16,8 @@ main = "src/index.js"
 [env.staging.vars]
 ENVIRONMENT = "staging"
 MAILBOXES = [
-  { id = "mcptest@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_REASINGER", signature = "", folders = {} },
-  { id = "mcptest@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_YCD", signature = "", folders = {} },
+  { id = "mcptest@reasinger.net", host = "server128.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_REASINGER", signature = "mcptest | mcptest@reasinger.net | reasinger.net", folders = {} },
+  { id = "mcptest@yourcigardenindy.com", host = "server223.web-hosting.com", port = 993, secret_ref = "IMAP_PASS_MCPTEST_YCD", signature = "mcptest | mcptest@yourcigardenindy.com | yourcigardenindy.com", folders = {} },
 ]
 
 # The three live accounts. Deployed only from a tag (job added in C6).
