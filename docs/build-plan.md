@@ -1,6 +1,6 @@
 # cpanel-mail-mcp: Build plan
 
-Builds to spec v1.4 (git tag `spec-v1.4`). The plan adds no requirements.
+Builds to spec v1.4 (git tag `spec-v1.5`). The plan adds no requirements.
 
 ## Roles
 
