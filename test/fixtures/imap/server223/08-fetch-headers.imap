@@ -1,0 +1,11 @@
+* 1 FETCH (UID 3 FLAGS (\Seen \Draft) BODY[HEADER.FIELDS (FROM TO SUBJECT DATE MESSAGE-ID REFERENCES)] {298}
+From: Fixture Sender <fixture@example.invalid>
+To: "Fixture, Recipient" <fixture@example.invalid>
+Subject: =?UTF-8?B?Rml4dHVyZSDDqSBzdWJqZWN0?=
+Date: Mon, 02 Nov 2026 12:00:00 +0000
+Message-ID: <fixture-1@cpanel-mail-mcp.invalid>
+References: <root@example.invalid>
+	<fold@example.invalid>
+
+)
+A8 OK Fetch completed (0.001 + 0.000 secs).

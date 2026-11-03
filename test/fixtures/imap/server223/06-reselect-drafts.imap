@@ -1,0 +1,9 @@
+* OK [CLOSED] Previous mailbox closed.
+* FLAGS (\Answered \Flagged \Deleted \Seen \Draft)
+* OK [PERMANENTFLAGS (\Answered \Flagged \Deleted \Seen \Draft \*)] Flags permitted.
+* 1 EXISTS
+* 0 RECENT
+* OK [UIDVALIDITY 1793655584] UIDs valid
+* OK [UIDNEXT 4] Predicted next UID
+* OK [HIGHESTMODSEQ 8] Highest
+A6 OK [READ-WRITE] Select completed (0.001 + 0.000 secs).

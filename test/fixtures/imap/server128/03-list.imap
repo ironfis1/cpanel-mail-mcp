@@ -1,0 +1,8 @@
+* LIST (\HasChildren) "." INBOX
+* LIST (\HasNoChildren \UnMarked \Archive) "." INBOX.Archive
+* LIST (\HasNoChildren \UnMarked) "." INBOX.Junk
+* LIST (\HasNoChildren \UnMarked \Junk) "." INBOX.spam
+* LIST (\HasNoChildren \UnMarked \Sent) "." INBOX.Sent
+* LIST (\HasNoChildren \UnMarked \Trash) "." INBOX.Trash
+* LIST (\HasNoChildren \UnMarked \Drafts) "." INBOX.Drafts
+A3 OK List completed (0.001 + 0.000 + 0.001 secs).
