@@ -161,22 +161,22 @@ Every requirement in docs/spec.md (tag spec-v1.3) is owned by exactly one chunk.
 | REQ-9-29 | C5 | integration + manual (Scott) | | open |
 | REQ-9-30 | SKILL | skill review | | open |
 | REQ-9-31 | C6 | doc check | | open |
-| REQ-10-1 | C3 | automated test | | open |
-| REQ-10-2 | C3 | automated test | | open |
-| REQ-10-3 | C3 | automated test | | open |
-| REQ-10-4 | C3 | automated test | | open |
+| REQ-10-1 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-1: every account's draft gets its configured signature from a signature-free body", "REQ-10-1: an edit that supplies a new body is signed the same way" | built |
+| REQ-10-2 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-2: the signature is added here, in the message the server builds, with none from the caller" | built |
+| REQ-10-3 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-3: signature texts in config are exactly the spec's" | built |
+| REQ-10-4 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-4: config is the source of truth: the account entry decides the text, not any input", "REQ-10-4: an account with no configured signature cannot be signed" | built |
 | REQ-10-5 | C6 | README check | | open |
-| REQ-10-6 | C3 | automated test | | open |
-| REQ-10-7 | C3 | automated test | | open |
-| REQ-10-8 | C3 | automated test | | open |
-| REQ-10-9 | C3 | automated test | | open |
-| REQ-10-10 | C3 | automated test | | open |
-| REQ-10-11 | C3 | automated test | | open |
+| REQ-10-6 | C3 | automated test | test/unit/signatures.test.mjs: the three REQ-10-6 tests (normalized trailing copy stripped, only an exact trailing copy stripped, another account's signature kept) | built |
+| REQ-10-7 | C3 | automated test | test/unit/signatures.test.mjs: the three REQ-10-7 tests (`splitStoredDraft`: re-derive and re-sign, quoted original survives, unsigned draft reported). The `draft` edit call arrives in C5. Lossless re-derivation relies on the text part holding the markdown source (Q5, open) | built |
+| REQ-10-8 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-8: in a reply or forward the signature is under the new text, above the quote, in both parts", "REQ-10-8: a signature copy at the end of the new text does not double above the quote". Placement only; the quote's format is Q4 | built |
+| REQ-10-9 | C3 | automated test | test/unit/signatures.test.mjs: the five REQ-10-9 tests (markdown bypass, own block and identical link text, URL escaping, no link without a URL, both parts through the whole message). Bare domains are not linked pending Q6 | built |
+| REQ-10-10 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-10: the caller's body carries no signature and the stored draft carries the server's" | built |
+| REQ-10-11 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-10-11: the registry refuses a signature containing sreasinger@gmail.com" | built |
 | REQ-10-12 | SKILL | skill review | | open |
-| REQ-11-1 | C3 | automated test | | open |
-| REQ-11-2 | C3 | automated test | | open |
-| REQ-11-3 | C3 | automated test | | open |
-| REQ-11-4 | C3 | automated test | | open |
+| REQ-11-1 | C3 | automated test | test/unit/headers.test.mjs: the REQ-11-1 tests, including the real subjects recorded from server128 and server223; test/unit/mime-parse.test.mjs: "REQ-11-1 REQ-6-19: parses the real multipart message recorded from ..." | built |
+| REQ-11-2 | C3 | automated test | test/unit/headers.test.mjs: "REQ-11-2: Re: is built from the decoded subject and added only when absent", "REQ-11-2: Fwd: is built from the decoded subject" | built |
+| REQ-11-3 | C3 | automated test | test/unit/headers.test.mjs: the REQ-11-3 tests; test/unit/mime-build.test.mjs: "REQ-11-3 REQ-14-15: the built message carries the re-encoded subject in pure ASCII" | built |
+| REQ-11-4 | C3 | automated test | test/unit/headers.test.mjs: the REQ-11-4 tests; test/unit/mime-build.test.mjs: "REQ-11-4: the built message sets In-Reply-To and folded References", "REQ-11-4: a new draft has no threading headers". Thread reconstruction (REQ-6-28 to REQ-6-32) has its own rows in C4 | built |
 | REQ-12-1 | C4 | automated test | | open |
 | REQ-12-2 | C4 | automated test | | open |
 | REQ-12-3 | C1 | automated test | test/unit/imap-sessions.test.mjs: "REQ-4-12 REQ-12-3 REQ-14-7: auth failure disables the account for the request, names the secret, never retries" and the other REQ-12-3 tests | built |
@@ -203,13 +203,13 @@ Every requirement in docs/spec.md (tag spec-v1.3) is owned by exactly one chunk.
 | REQ-14-6 | C1 | automated test | test/unit/imap-fixtures.test.mjs: "REQ-14-6: recorded <host> session replays through the client", "large literal keeps the exact message bytes", "unusual FETCH shapes parse", "fixtures hold no credentials or live mailbox data", for server128 and server223, against test/fixtures/imap/ recorded by Scott with scripts/record-fixtures.mjs; plus the recorder's own REQ-14-6 tests there | built |
 | REQ-14-7 | C1 | automated test | test/unit/imap-client.test.mjs: LITERAL+ on and off and literal mailbox name tests; test/unit/imap-sessions.test.mjs: auth failure test; test/unit/imap-timeouts.test.mjs: silent-server tests at every step | built |
 | REQ-14-8 | C1 | automated test | test/unit/imap-timeouts.test.mjs: every "REQ-14-8: silent <step> times out" test and "REQ-4-9 REQ-14-8: a timeout fails that account loudly and the other host still answers" | built |
-| REQ-14-9 | C3 | automated test | | open |
-| REQ-14-10 | C3 | automated test | | open |
-| REQ-14-11 | C3 | automated test | | open |
+| REQ-14-9 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-14-9: resubmitting a signed body yields exactly one signature", "REQ-14-9: a body that is only the signature yields exactly the signature" | built |
+| REQ-14-10 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-14-10: the scott@reasinger.net config string equals the gatekeeper check-file signature line". Compares against gatekeeper-panel L48 as recorded in docs/extraction/source-pack.md; the live skill is outside this repo | built |
+| REQ-14-11 | C3 | automated test | test/unit/signatures.test.mjs: "REQ-14-11: no configured signature contains sreasinger@gmail.com, in any environment" | built |
 | REQ-14-12 | C5 | automated test | | open |
 | REQ-14-13 | C2 | automated test | test/integration/folders-filters.test.mjs: "REQ-14-13 REQ-7-8: from: finds a MAILER-DAEMON display name and a postmaster@ address on <host>"; test/unit/filter.test.mjs: "REQ-14-13: the MAILER-DAEMON and postmaster filters ask the server for a FROM match" | built |
 | REQ-14-14 | C2 | automated test | test/unit/filter.test.mjs: "REQ-14-14 REQ-7-10: every filter string the skills pass translates" | built |
-| REQ-14-15 | C3 | automated test | | open |
+| REQ-14-15 | C3 | automated test | test/unit/headers.test.mjs: "REQ-11-3 REQ-14-15: a non-ASCII subject is re-encoded on write and decodes back unchanged", "REQ-11-3 REQ-14-15: a long non-ASCII subject folds, keeps encoded words legal and round-trips"; test/unit/mime-build.test.mjs: "REQ-11-3 REQ-14-15: the built message carries the re-encoded subject in pure ASCII" | built |
 | REQ-14-16 | C5 | automated test | | open |
 | REQ-14-17 | C6 | automated test | | open |
 | REQ-15-1 | C6 | gate record | | open |
@@ -274,7 +274,7 @@ Every requirement in docs/spec.md (tag spec-v1.3) is owned by exactly one chunk.
 | REQ-18-5 | C4 | automated test | | open |
 | REQ-18-6 | C5 | automated test | | open |
 | REQ-18-7 | C5 | automated test | | open |
-| REQ-18-8 | C3 | automated test | | open |
+| REQ-18-8 | C3 | automated test | test/unit/mime-build.test.mjs: the REQ-18-8 tests cover CommonMark parsing and the multipart message. The quote format (second sentence) is NOT built: Spark's format is not recorded anywhere, see spec question Q4 | partial: quote format blocked on Q4 |
 | REQ-18-9 | C4 | automated test | | open |
 | REQ-18-10 | SKILL | skill review | | open |
 | REQ-18-11 | SKILL | skill review | | open |
