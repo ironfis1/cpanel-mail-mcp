@@ -55,11 +55,29 @@ function translateToken(token, now) {
   return `${VALUE_KEYS[key]} ${quote(value)}`;
 }
 
+const words = (text) => String(text ?? "").split(/\s+/).filter(Boolean);
+
+// Without a charset, non-ASCII search text is invalid IMAP.
+export const withCharset = (criteria) => (/[^\x00-\x7f]/.test(criteria) ? `CHARSET UTF-8 ${criteria}` : criteria);
+
+// One search key matching any of the given keys. IMAP's OR takes exactly two.
+export const anyOf = (keys) => keys.reduceRight((rest, key) => `OR ${key} ${rest}`);
+
 // Returns criteria for ImapClient.uidSearch(). An empty filter matches everything.
 export function translateFilter(filter, { now = new Date() } = {}) {
-  const tokens = String(filter ?? "").split(/\s+/).filter(Boolean);
+  const tokens = words(filter);
   if (tokens.length === 0) return "ALL";
-  const criteria = tokens.map((token) => translateToken(token, now)).join(" ");
-  // Without a charset, non-ASCII search text is invalid IMAP.
-  return /[^\x00-\x7f]/.test(criteria) ? `CHARSET UTF-8 ${criteria}` : criteria;
+  return withCharset(tokens.map((token) => translateToken(token, now)).join(" "));
+}
+
+// The search tool's criteria: query words ORed as TEXT terms, ANDed with the filter's tokens. Query
+// words are free text, not filter tokens, so "from:x" in a query is searched for as written.
+export function translateSearch(query, filter, { now = new Date() } = {}) {
+  const keys = words(filter).map((token) => translateToken(token, now));
+  const terms = words(query).map((word) => {
+    if (/[\0-\x1f\x7f]/.test(word)) throw new ServerError("filter", "control characters are not allowed in a query");
+    return `TEXT ${quote(word)}`;
+  });
+  if (terms.length) keys.push(anyOf(terms));
+  return keys.length ? withCharset(keys.join(" ")) : "ALL";
 }

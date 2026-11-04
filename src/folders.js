@@ -14,6 +14,8 @@ const ROLES = {
 
 const lastSegment = ({ path, delimiter }) => (delimiter ? path.split(delimiter).at(-1) : path).toLowerCase();
 
+// The path for a logical name, or null when no folder fills that role. Several candidates is an
+// error, because the server never picks one.
 function discover(logical, list) {
   if (logical === "Inbox") return "INBOX";
   const { flag, names } = ROLES[logical];
@@ -29,7 +31,7 @@ function discover(logical, list) {
   if (named.length > 1) {
     throw new ServerError("folder", `several folders match ${logical} by name; set a config override`);
   }
-  throw new ServerError("folder", `no folder found for ${logical}; it is not created automatically. Set a config override`);
+  return null;
 }
 
 export class FolderMap {
@@ -46,7 +48,24 @@ export class FolderMap {
   // Throws per name, so a missing Archive does not stop the Inbox working.
   path(logical) {
     if (!LOGICAL_NAMES.includes(logical)) throw new ServerError("folder", `unknown folder name: ${logical}`);
-    return this.#overrides[logical] ?? discover(logical, this.#list);
+    const path = this.#overrides[logical] ?? discover(logical, this.#list);
+    if (path === null) {
+      throw new ServerError("folder", `no folder found for ${logical}; it is not created automatically. Set a config override`);
+    }
+    return path;
+  }
+
+  // What LIST returned for this session.
+  get list() {
+    return this.#list;
+  }
+
+  // Every selectable folder except Trash and Junk. A host with no Trash or Junk has nothing to leave out.
+  searchable() {
+    const excluded = ["Trash", "Junk"].map((logical) => this.#overrides[logical] ?? discover(logical, this.#list));
+    return this.#list
+      .filter(({ path, flags }) => !excluded.includes(path) && !flags.some((flag) => /^\\(noselect|nonexistent)$/i.test(flag)))
+      .map(({ path }) => path);
   }
 }
 

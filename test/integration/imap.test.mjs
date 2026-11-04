@@ -51,6 +51,25 @@ for (const { id, host } of testMailboxes()) {
     assert.equal(value.flagged, true);
   });
 
+  test(`REQ-6-13: UID SORT on ${host} orders by Date header, whatever order the UIDs arrived in`, { skip }, async () => {
+    const { reads } = await resultFor(id);
+    assert.equal(reads.sortedNewestFirst, true);
+    assert.equal(reads.sortedOldestFirst, true);
+  });
+
+  test(`REQ-6-20: a real delivery report on ${host} has a snippet led by its delivery status`, { skip }, async () => {
+    const { reads } = await resultFor(id);
+    assert.ok(reads.snippet.startsWith("Final-Recipient: rfc822; gone@example.invalid Diagnostic-Code: smtp; 550 no such user"), reads.snippet);
+    assert.ok(reads.snippet.includes("could not deliver"));
+  });
+
+  test(`REQ-6-32: a real delivery report on ${host} gives the status and embedded headers, not the embedded body`, { skip }, async () => {
+    const { reads } = await resultFor(id);
+    assert.ok(reads.body.includes("Diagnostic-Code: smtp; 550 no such user"));
+    assert.ok(reads.body.includes("Subject: embedded original"));
+    assert.ok(!reads.body.includes("EMBEDDED BODY"));
+  });
+
   test(`REQ-4-5: move on ${host} leaves the message only in the destination, then it is removed`, { skip }, async () => {
     const value = await resultFor(id);
     assert.equal(value.movedOut, true);

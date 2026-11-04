@@ -157,6 +157,55 @@ test("REQ-4-12 REQ-12-3: a missing secret is reported as check the secret, witho
   assert.equal(srv.connections.length, 0);
 });
 
+const refusing = (reply) => fakeServer({ respond: (tag, cmd) => (cmd.startsWith("AUTHENTICATE") ? `${tag} ${reply}\r\n` : undefined) });
+
+test("REQ-19-2: a refusal with another response code fails the account, names the code and is not retried", async () => {
+  for (const code of ["UNAVAILABLE", "LIMIT"]) {
+    const srv = refusing(`NO [${code}] secret-looking server text`);
+    const sessions = new RequestSessions({ connect: srv.connect, env });
+    for (let call = 0; call < 3; call++) {
+      await assert.rejects(sessions.run(A, (client) => client.list()), (error) => {
+        assert.equal(error.code, "connection");
+        assert.equal(error.responseCode, code);
+        assert.match(error.message, new RegExp(code));
+        assert.doesNotMatch(error.message, /secret/);
+        return true;
+      });
+    }
+    assert.equal(srv.connections.length, 1, "no second connection");
+    assert.equal(srv.commands.filter((c) => c.startsWith("AUTHENTICATE")).length, 1, "no retry");
+    assert.equal(srv.sockets[0].closed, true);
+  }
+});
+
+test("REQ-19-2 REQ-4-12: AUTHENTICATIONFAILED and a refusal with no response code are auth failures", async () => {
+  for (const reply of ["NO [AUTHENTICATIONFAILED] Authentication failed.", "NO Authentication failed.", "NO [authenticationfailed] lower case"]) {
+    const srv = refusing(reply);
+    const sessions = new RequestSessions({ connect: srv.connect, env });
+    await assert.rejects(sessions.run(A, (client) => client.list()), (error) => {
+      assert.equal(error.code, "auth", reply);
+      assert.match(error.message, /check the IMAP_PASS_TEST secret/);
+      return true;
+    });
+    assert.equal(srv.connections.length, 1);
+  }
+});
+
+test("REQ-19-2: an account refused with another code leaves the others working", async () => {
+  const srv = fakeServer({
+    respond: (tag, cmd) => {
+      if (!cmd.startsWith("AUTHENTICATE")) return undefined;
+      const user = atob(cmd.slice(19)).split("\0")[1];
+      return user === "b@two.test" ? `${tag} NO [UNAVAILABLE] busy\r\n` : undefined;
+    },
+  });
+  const sessions = new RequestSessions({ connect: srv.connect, env });
+  const [first, second] = await sessions.runEach([B, C], (client) => client.select("INBOX"));
+  assert.deepEqual([first.ok, first.reached, first.code], [false, false, "connection"]);
+  assert.deepEqual([second.ok, second.reached], [true, true]);
+  await sessions.closeAll();
+});
+
 test("REQ-4-9: a command error keeps the session open for the rest of the request", async () => {
   const srv = fakeServer();
   const sessions = new RequestSessions({ connect: srv.connect, env });

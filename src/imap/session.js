@@ -5,30 +5,40 @@ import { ImapClient } from "./client.js";
 import { ImapError } from "./errors.js";
 import { FolderMap } from "../folders.js";
 
+// Each error from opening a session records its step, which availability reports.
 async function openSession(connect, account, password) {
+  let step = "tcp_tls";
   let socket;
   try {
     socket = connect({ hostname: account.host, port: account.port }, { secureTransport: "on", allowHalfOpen: false });
   } catch {
-    throw new ImapError("connection", "IMAP connection could not be opened");
+    throw Object.assign(new ImapError("connection", "IMAP connection could not be opened"), { step });
   }
   const client = new ImapClient(socket);
   try {
     await client.opened();
+    step = "greeting";
     await client.greeting();
+    step = "login";
     await client.login(account.id, password);
+    step = "capability";
     await client.capability();
+    step = "list";
     // Discovered at every session open; there is no folder cache.
     client.folders = new FolderMap(await client.list(), account.folders);
     return client;
   } catch (error) {
     await client.close();
+    error.step = step;
     throw error;
   }
 }
 
-const authFailure = (account) =>
-  new ImapError("auth", `IMAP authentication failed for ${account.id}: check the ${account.secret_ref} secret. Not retried.`);
+const authFailure = (account, step) =>
+  Object.assign(
+    new ImapError("auth", `IMAP authentication failed for ${account.id}: check the ${account.secret_ref} secret. Not retried.`),
+    { step },
+  );
 
 export class RequestSessions {
   #connect;
@@ -57,7 +67,7 @@ export class RequestSessions {
 
     const password = this.#env[account.secret_ref];
     if (!password) {
-      const error = authFailure(account);
+      const error = authFailure(account, "secret");
       this.#failed.set(account.id, error);
       throw error;
     }
@@ -66,7 +76,7 @@ export class RequestSessions {
       this.#sessions.set(account.id, client);
       return client;
     } catch (raw) {
-      const error = raw.code === "auth" ? authFailure(account) : raw;
+      const error = raw.code === "auth" ? authFailure(account, raw.step) : raw;
       this.#failed.set(account.id, error);
       throw error;
     }
@@ -90,13 +100,21 @@ export class RequestSessions {
   }
 
   // Runs fn on every account. One account's failure is reported in its own entry and never rejects
-  // the call, so every result says whether that account was reached.
+  // the call. reached means the account still has a live session: a folder or ID error is reached
+  // with ok false, while a failed login or a lost connection is not reached.
   runEach(accounts, fn) {
     return Promise.all(
       accounts.map((account) =>
         this.run(account, fn).then(
-          (value) => ({ id: account.id, ok: true, value }),
-          (error) => ({ id: account.id, ok: false, code: error.code ?? "error", error: error.message }),
+          (value) => ({ id: account.id, ok: true, reached: true, value }),
+          (error) => ({
+            id: account.id,
+            ok: false,
+            reached: this.#sessions.has(account.id),
+            code: error.code ?? "error",
+            error: error.message,
+            step: error.step ?? null,
+          }),
         ),
       ),
     );

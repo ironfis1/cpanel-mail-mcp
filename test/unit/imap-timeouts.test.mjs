@@ -152,7 +152,7 @@ test("REQ-4-9 REQ-14-8: a timeout fails that account loudly and the other host s
   assert.equal(results[0].ok, false);
   assert.equal(results[0].code, "timeout");
   assert.match(results[0].error, /greeting timed out after 5000 ms/);
-  assert.deepEqual(results[1], { id: "b@healthy.test", ok: true, value: { exists: 2, uidValidity: "1730000000" } });
+  assert.deepEqual(results[1], { id: "b@healthy.test", ok: true, reached: true, value: { exists: 2, uidValidity: "1730000000" } });
   assert.equal(silent.sockets[0].closed, true, "the timed-out socket is closed");
 });
 

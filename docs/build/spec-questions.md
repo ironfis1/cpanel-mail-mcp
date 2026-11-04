@@ -43,3 +43,10 @@ Question: REQ-10-9 renders "any URL" in a signature as a link. Does `yourcigarde
 Options: (a) Only `http://` and `https://` text is a URL, so those signatures have no link. (b) A bare domain is also a URL and links to `https://` plus the domain, with the visible text unchanged.
 Blocking: no. Until answered the builder takes (a), which adds nothing the config does not state. The visible signature text is identical either way.
 Resolution: Scott chose (a), 2026-11-03: only http:// and https:// text in a signature is a link; a bare domain stays plain text. Spark itself links the bare domain with no scheme (docs/build/samples), which supports this. Recorded in spec v1.4.
+
+## Q7 (C4)
+REQ: REQ-6-30
+Question: The subject fallback joins a message with "a shared participant within 60 days", but two things are not stated. First, does the account's own address count as a participant? Almost every message in a mailbox involves it, so if it counts, two unrelated messages from different senders with a subject like "Invoice" would join one thread. Second, what are the 60 days measured from: the requested message, or any message already in the thread?
+Options: (a) The account's own address does not count, and the 60 days run from any member with that subject. (b) The account's own address does not count, and the 60 days run from the requested message only. (c) The account's own address counts, and the 60 days run from any member.
+Blocking: no. Until answered the builder takes (a). Leaving the account's own address out can only keep a message out of a thread, never join an unrelated one, and the acceptance comparison with Spark (REQ-15-7) will show if it keeps too much out. Running the 60 days from any member lets a slow exchange stay whole. One test pins each half, so a different answer is a small change.
+Resolution:
