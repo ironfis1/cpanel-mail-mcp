@@ -7,7 +7,8 @@
     "test:integration": "node --test --test-timeout=20000 \"test/integration/**/*.test.mjs\"",
     "trace": "node scripts/trace.mjs",
     "check": "wrangler deploy --env staging --dry-run --outdir dist",
-    "deploy:staging": "wrangler deploy --env staging"
+    "deploy:staging": "node scripts/wrangler.mjs deploy --env staging",
+    "wrangler": "node scripts/wrangler.mjs"
   },
   "devDependencies": {
     "smol-toml": "^1.9.1",
