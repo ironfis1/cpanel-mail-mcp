@@ -19,7 +19,8 @@ Cloudflare Worker remote MCP server for IMAP access to Scott's three cPanel busi
 ## Environment
 
 - Node 24. Install with `npm ci`, never `npm install`.
-- Wrangler must be logged in as scott@reasinger.net (`npx wrangler whoami`) with `CLOUDFLARE_ACCOUNT_ID` set for that account. Scott has three Cloudflare accounts; check before any deploy.
+- Scott has three Cloudflare accounts and several projects on each computer, so the global `wrangler login` is never used. Run wrangler only as `npm run wrangler -- <args>` (`scripts/wrangler.mjs`). It uses the `account_id` pinned in `wrangler.toml` (scott@reasinger.net, `4d82e6de…`) and that account's token, saved once per computer by `scripts/save-cf-token.ps1`. Never call `npx wrangler` directly for anything that talks to Cloudflare.
+- Check with `npm run wrangler -- whoami` before any deploy. If it reports no saved token, ask Scott to run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\save-cf-token.ps1`; never enter or handle the token yourself.
 - There is no default environment. Use `--env staging`. Production deploys only from a tag via CI.
 
 ## Secrets

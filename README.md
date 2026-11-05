@@ -63,10 +63,21 @@ Too many failed logins can make cPanel's cPHulk block the server's address. Work
 
 ## Deploy staging
 
-There is no default environment, so a bare `wrangler deploy` fails. First check that `npx wrangler whoami` shows the scott@reasinger.net account.
+There is no default environment, so a bare `wrangler deploy` fails.
+
+Run wrangler through `npm run wrangler -- <args>`, not `npx wrangler`. The wrapper (`scripts/wrangler.mjs`) reads `account_id` from `wrangler.toml` and uses the API token saved for that account on this computer, so the global `wrangler login`, and whichever Cloudflare account it belongs to, never matters. It refuses to run if `CLOUDFLARE_ACCOUNT_ID` is set to a different account.
+
+Once per computer, create an API token in the scott@reasinger.net Cloudflare account (template "Edit Cloudflare Workers", Account Resources limited to that account) and save it:
 
 ```
-npx wrangler deploy --env staging
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\save-cf-token.ps1
+```
+
+It asks for the token at a hidden prompt and stores it encrypted with Windows DPAPI at `%USERPROFILE%\.cloudflare\<account id>.token`, outside the repo. Only your Windows user on that computer can decrypt it, so do this once on each computer. The same script with `-AccountId <id>` saves a token for another account's projects. Optionally run `npx wrangler logout` so nothing can fall back to a global login.
+
+```
+npm run wrangler -- whoami          # must list only the scott@reasinger.net account
+npm run deploy:staging
 ```
 
 ## Set secrets
@@ -76,9 +87,9 @@ Enter values only at the `wrangler secret put` prompt. Never put them in a file 
 Staging Worker:
 
 ```
-npx wrangler secret put STAGING_TOKEN --env staging
-npx wrangler secret put IMAP_PASS_MCPTEST_REASINGER --env staging
-npx wrangler secret put IMAP_PASS_MCPTEST_YCD --env staging
+npm run wrangler -- secret put STAGING_TOKEN --env staging
+npm run wrangler -- secret put IMAP_PASS_MCPTEST_REASINGER --env staging
+npm run wrangler -- secret put IMAP_PASS_MCPTEST_YCD --env staging
 ```
 
 GitHub repo secrets (Settings, Secrets and variables, Actions):

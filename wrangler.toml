@@ -1,10 +1,13 @@
 # Both environments live in the scott@reasinger.net Cloudflare account (workers.dev
-# subdomain reasinger-ops). The account is selected by CLOUDFLARE_ACCOUNT_ID.
+# subdomain reasinger-ops), pinned by account_id below. Run wrangler through
+# `npm run wrangler --` (scripts/wrangler.mjs), which uses this account's token, never the
+# global `wrangler login`.
 # No top-level main: a bare `wrangler deploy` must fail instead of hitting production
 # (wrangler would otherwise take the Worker name from package.json).
 # Passwords are never here. Each secret_ref names a secret set with `wrangler secret put`.
 # MAILBOXES is the account registry (src/accounts.js). folders holds overrides: a logical name set
 # here replaces the discovered folder. An empty signature means unset.
+account_id = "4d82e6de49843389bf618597a5e4018d"
 compatibility_date = "2026-10-01"
 workers_dev = true
 
