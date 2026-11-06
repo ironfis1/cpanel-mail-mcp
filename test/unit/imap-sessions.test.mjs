@@ -272,16 +272,24 @@ const httpConnect = (reply) => (address, options) => {
   };
 };
 
-test("REQ-14-2: egressIp reads the address from the echo service over TLS, and gives null for anything else", async () => {
+test("REQ-14-2: egressIp reads the address from a non-Cloudflare echo service over TLS, and explains a missing reading", async () => {
   httpConnect.calls = [];
-  const ok = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\n104.28.1.200";
+  const ok = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\n104.28.1.200\n";
   assert.equal(await egressIp(httpConnect(ok)), "104.28.1.200");
   assert.deepEqual(httpConnect.calls[0], {
-    address: { hostname: "api.ipify.org", port: 443 },
+    address: { hostname: "checkip.amazonaws.com", port: 443 },
     options: { secureTransport: "on", allowHalfOpen: false },
   });
   assert.equal(await egressIp(httpConnect("HTTP/1.1 200 OK\r\n\r\n2a06:98c0:3600::103")), "2a06:98c0:3600::103");
-  assert.equal(await egressIp(httpConnect("HTTP/1.1 503 Busy\r\n\r\n<html>busy</html>")), null);
-  assert.equal(await egressIp(() => { throw new Error("refused"); }), null);
-  assert.equal(await egressIp(httpConnect(null), { timeoutMs: 20 }), null, "a silent service times out");
+  const busy = await egressIp(httpConnect("HTTP/1.1 503 Busy\r\n\r\n<html>busy</html>"));
+  assert.equal(busy, "unavailable: checkip.amazonaws.com: HTTP 503, no address; api.ipify.org: HTTP 503, no address");
+  const refused = await egressIp(() => { throw new Error("proxy request failed, cannot connect to the specified address"); });
+  assert.match(refused, /^unavailable: checkip\.amazonaws\.com: proxy request failed/);
+  assert.match(await egressIp(httpConnect(null), { timeoutMs: 20 }), /no reply in 20 ms/, "a silent service times out");
+});
+
+test("REQ-14-2: egressIp falls back to the second echo service when the first gives nothing", async () => {
+  const replies = { "checkip.amazonaws.com": null, "api.ipify.org": "HTTP/1.1 200 OK\r\n\r\n198.51.100.9" };
+  const connect = (address, options) => httpConnect(replies[address.hostname])(address, options);
+  assert.equal(await egressIp(connect, { timeoutMs: 20 }), "198.51.100.9");
 });
