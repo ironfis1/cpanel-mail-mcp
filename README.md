@@ -2,7 +2,7 @@
 
 Cloudflare Worker remote MCP server for IMAP access to three cPanel business mailboxes. Build spec: `docs/spec.md` (tag `spec-v1.1`). Build process: `docs/build-plan.md`.
 
-Status: scaffolding, the IMAP client (`src/imap/`, chunk C1), and accounts, folders, filters and message IDs (chunk C2). No MCP tools yet. This README is a stub until C6.
+Status: scaffolding, the IMAP client (`src/imap/`, chunk C1), accounts, folders, filters and message IDs (chunk C2), headers, MIME and signatures (chunk C3), and the MCP endpoint with the read tools (chunk C4). The write tools arrive in C5 and OAuth in C6. This README is a stub until C6.
 
 The three business mailboxes are read directly over IMAP, not through Gmail. The cPanel forwarders to Gmail were retired on 2026-10-26.
 
@@ -26,6 +26,8 @@ node scripts/trace.mjs        # REQ coverage per chunk
 node scripts/trace.mjs --chunk C0 --strict
 node scripts/trace.mjs --chunk C1 --strict
 node scripts/trace.mjs --chunk C2 --strict
+node scripts/trace.mjs --chunk C3 --strict
+node scripts/trace.mjs --chunk C4 --strict
 npm run check                 # wrangler deploy --env staging --dry-run
 ```
 
@@ -35,7 +37,15 @@ The integration suite calls the deployed staging Worker over HTTPS. It skips wit
 npm run test:integration
 ```
 
-`/imap-check` on the staging Worker runs the IMAP client against both test mailboxes. It appends a synthetic message to Drafts, then moves and removes it.
+`/imap-check` on the staging Worker runs the IMAP client against both test mailboxes. It appends synthetic messages to Drafts, then moves and removes them.
+
+The read tool tests need real mail: send 3 or 4 ordinary emails from Gmail to each mcptest mailbox first. They also send the `x-staging-break-host` header, which gives the named account a host that cannot resolve, to prove the other account still answers. Staging only; it goes when `STAGING_TOKEN` goes in C6.
+
+## MCP endpoint
+
+`POST /mcp` speaks MCP over streamable HTTP, one JSON-RPC message per request and one JSON response, with no session and no event stream. Until C6 it sits behind the `STAGING_TOKEN` bearer on staging only.
+
+The tools are `accounts`, `availability`, `folders`, `emails`, `search` and `thread`. Every response carries `accounts_reached` and `accounts_not_reached`. An account that was reached but could not answer, for example because of a missing Archive, is listed in `errors`. A result is a tool error (`isError`) only when no account could answer; `availability` reports failed checks as its normal answer. `emails` and `search` need the host to advertise IMAP SORT, which both hosts do.
 
 ## Account registry and filters
 

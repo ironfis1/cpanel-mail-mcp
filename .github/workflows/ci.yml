@@ -26,6 +26,7 @@ jobs:
       - run: node scripts/trace.mjs --chunk C1 --strict
       - run: node scripts/trace.mjs --chunk C2 --strict
       - run: node scripts/trace.mjs --chunk C3 --strict
+      - run: node scripts/trace.mjs --chunk C4 --strict
       - run: npx wrangler deploy --env staging --dry-run --outdir dist
 
   integration:

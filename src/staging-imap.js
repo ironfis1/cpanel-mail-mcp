@@ -6,6 +6,7 @@ import { translateFilter } from "./filter.js";
 import { LOGICAL_NAMES } from "./folders.js";
 import { quote } from "./imap/client.js";
 import { RequestSessions } from "./imap/session.js";
+import { readBody, readMetadata, readSnippets } from "./tools/messages.js";
 
 const LARGE_BYTES = 200_000;
 
@@ -67,6 +68,71 @@ async function filterCheck(client, drafts) {
   }
 }
 
+const datedMessage = (date, mark) =>
+  ["From: mcptest@example.invalid", "To: mcptest@example.invalid", `Subject: sort ${mark}`, `Date: ${date}`, "", "sort check", ""].join("\r\n");
+
+function reportMessage(mark) {
+  const boundary = "cpanel-mail-mcp-report";
+  return [
+    "From: MAILER-DAEMON@example.invalid",
+    "To: mcptest@example.invalid",
+    `Subject: report ${mark}`,
+    "Date: Mon, 02 Nov 2026 12:00:00 +0000",
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/report; report-type=delivery-status; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/plain; charset=utf-8",
+    "",
+    "The mail system could not deliver your message.",
+    `--${boundary}`,
+    "Content-Type: message/delivery-status",
+    "",
+    "Reporting-MTA: dns; example.invalid",
+    "",
+    "Final-Recipient: rfc822; gone@example.invalid",
+    "Action: failed",
+    "Diagnostic-Code: smtp; 550 no such user",
+    `--${boundary}`,
+    "Content-Type: message/rfc822",
+    "",
+    "From: mcptest@example.invalid",
+    "To: gone@example.invalid",
+    "Subject: embedded original",
+    "Date: Sun, 01 Nov 2026 12:00:00 +0000",
+    "",
+    "EMBEDDED BODY",
+    `--${boundary}--`,
+    "",
+  ].join("\r\n");
+}
+
+// Appends messages whose UIDs run against their dates and a delivery report, reads them the way the
+// tools do, and removes them again.
+async function readCheck(client, drafts) {
+  const mark = crypto.randomUUID();
+  const newer = await client.append(drafts, datedMessage("Tue, 03 Nov 2026 12:00:00 +0000", mark), ["\\Draft", "\\Seen"]);
+  const older = await client.append(drafts, datedMessage("Sun, 01 Nov 2026 12:00:00 +0000", mark), ["\\Draft", "\\Seen"]);
+  const report = await client.append(drafts, reportMessage(mark), ["\\Draft", "\\Seen"]);
+  const uids = [newer.uid, older.uid, report.uid];
+  try {
+    await client.select(drafts);
+    const descending = await client.uidSort(`SUBJECT ${quote(`sort ${mark}`)}`);
+    const ascending = await client.uidSort(`SUBJECT ${quote(`sort ${mark}`)}`, { reverse: false });
+    const [meta] = await readMetadata(client, [report.uid]);
+    const snippets = await readSnippets(client, [meta]);
+    return {
+      sortedNewestFirst: descending.join() === [newer.uid, older.uid].join(),
+      sortedOldestFirst: ascending.join() === [older.uid, newer.uid].join(),
+      snippet: snippets[report.uid],
+      body: await readBody(client, meta),
+    };
+  } finally {
+    await client.uidStore(uids.join(","), "+", ["\\Deleted"]);
+    await client.uidExpunge(uids.join(","));
+  }
+}
+
 async function check(client) {
   const capabilities = [...client.capabilities].sort();
   const folders = await client.list();
@@ -76,6 +142,7 @@ async function check(client) {
 
   const inbox = await client.select(logical.Inbox);
   const filters = await filterCheck(client, drafts);
+  const reads = await readCheck(client, drafts);
   const selected = await client.select(drafts);
 
   const messageId = `<check-${crypto.randomUUID()}@cpanel-mail-mcp.invalid>`;
@@ -101,6 +168,7 @@ async function check(client) {
     folders: folders.map(({ path: p, specialUse }) => ({ path: p, specialUse })),
     logical,
     filters,
+    reads,
     inboxUidValidity: inbox.uidValidity,
     draftsSelected: selected.uidValidity !== null,
     appended: appended.uid !== null,

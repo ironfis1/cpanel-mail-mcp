@@ -213,7 +213,9 @@ export class ImapClient {
   }
 
   // AUTHENTICATE PLAIN with SASL-IR: base64, so the password needs no escaping. The caller never
-  // sees the command text, and a refusal is always code "auth".
+  // sees the command text. A refusal is code "auth" only with AUTHENTICATIONFAILED or no response
+  // code. Any other response code (UNAVAILABLE, LIMIT) says the password is not the problem, so it
+  // is a connection-class failure that names the code.
   async login(user, password) {
     let binary = "";
     for (const byte of enc.encode(`\0${user}\0${password}`)) binary += String.fromCharCode(byte);
@@ -221,7 +223,14 @@ export class ImapClient {
       await this.#run("login", `AUTHENTICATE PLAIN ${btoa(binary)}`, { timeout: TIMEOUTS.login });
     } catch (error) {
       if (error.code !== "command") throw error;
-      throw new ImapError("auth", "IMAP authentication failed", { status: error.status });
+      const responseCode = /^\S+ \[([A-Za-z0-9._-]+)/.exec(error.serverText)?.[1].toUpperCase();
+      if (!responseCode || responseCode === "AUTHENTICATIONFAILED") {
+        throw new ImapError("auth", "IMAP authentication failed", { status: error.status });
+      }
+      throw new ImapError("connection", `IMAP login refused with server response code ${responseCode}. Not retried.`, {
+        status: error.status,
+        responseCode,
+      });
     }
   }
 
@@ -257,6 +266,20 @@ export class ImapClient {
     const uids = [];
     for (const { text } of untagged) {
       if (/^\* SEARCH\b/i.test(text)) uids.push(...text.slice(8).trim().split(/\s+/).filter(Boolean).map(Number));
+    }
+    return uids;
+  }
+
+  // UIDs ordered by the Date header (RFC 5256), newest first unless reverse is false. Takes the same
+  // criteria as uidSearch; SORT names its charset as an argument, so the CHARSET prefix is dropped.
+  async uidSort(criteria, { reverse = true } = {}) {
+    if (LINE_BREAK.test(criteria)) throw invalid("search criteria");
+    if (!this.capabilities.has("SORT")) throw new ImapError("unsupported", "host lacks SORT; cannot order messages by date");
+    const keys = criteria.replace(/^CHARSET UTF-8 /, "");
+    const { untagged } = await this.#run("UID SORT", `UID SORT (${reverse ? "REVERSE " : ""}DATE) UTF-8 ${keys}`);
+    const uids = [];
+    for (const { text } of untagged) {
+      if (/^\* SORT\b/i.test(text)) uids.push(...text.slice(6).trim().split(/\s+/).filter(Boolean).map(Number));
     }
     return uids;
   }

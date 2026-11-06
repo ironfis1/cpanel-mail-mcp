@@ -43,6 +43,17 @@ export function decodeMessageId(id) {
   return { account, folder, uidValidity, uid, messageId };
 }
 
+// The account for a decoded ID, checked before any IMAP call. IDs are not signed, so the account in
+// one proves nothing until it is found in the registry. A supplied account must agree with it.
+export function accountForId(registry, decoded, given) {
+  const account = registry.find((entry) => entry.id === decoded.account);
+  if (!account) throw new ServerError("id_invalid", "message ID names an account this server does not serve");
+  if (given !== undefined && given !== decoded.account) {
+    throw new ServerError("account_mismatch", `account ${given} does not match the message ID's account ${decoded.account}`);
+  }
+  return account;
+}
+
 // What Scott is handed for a draft: the server ID plus what he sees in Spark.
 export function draftReference({ id, account, to, subject }) {
   return { id, account, to, subject };

@@ -74,7 +74,8 @@ function dovecot(tag, cmd, options) {
 //   caps           extra post-login capabilities (default "MOVE UIDPLUS")
 //   password       accepted password
 //   silent         "connect", "greeting", or a RegExp of command text that gets no reply
-//   respond        (tag, cmd, srv) => string | undefined, tried before the Dovecot script
+//   respond        (tag, cmd, srv, conn) => string | undefined, tried before the Dovecot script. conn
+//                  is an object private to this connection
 //   large          the body returned for BODY.PEEK[]
 //   chunkSize      split every server send into network chunks of this many bytes
 export function fakeServer(options = {}) {
@@ -93,6 +94,7 @@ export function fakeServer(options = {}) {
 
   srv.connect = (address, socketOptions) => {
     srv.connections.push({ address, socketOptions, at: srv.commands.length });
+    const conn = { address };
     let controller;
     let closed = false;
     const readable = new ReadableStream({
@@ -114,7 +116,7 @@ export function fakeServer(options = {}) {
     const handle = (tag, cmd) => {
       srv.commands.push(cmd);
       if (opts.silent instanceof RegExp && opts.silent.test(cmd)) return;
-      const custom = opts.respond?.(tag, cmd, srv);
+      const custom = opts.respond?.(tag, cmd, srv, conn);
       send(custom !== undefined ? custom : dovecot(tag, cmd, opts));
     };
     const onLine = (line) => {
@@ -131,7 +133,7 @@ export function fakeServer(options = {}) {
         return undefined;
       }
       if (!literal[3]) {
-        const refuse = opts.respond?.(tag, cmd, srv);
+        const refuse = opts.respond?.(tag, cmd, srv, conn);
         if (refuse !== undefined) {
           owed = 0;
           return send(refuse);

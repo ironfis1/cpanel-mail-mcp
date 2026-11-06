@@ -6,14 +6,14 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 |---|---|---|---|---|
 | REQ-1-1 | C6 | acceptance | | open |
 | REQ-1-2 | C6 | doc check | | open |
-| REQ-1-3 | C4 | automated test | | open |
-| REQ-1-4 | C4 | automated test | | open |
-| REQ-1-5 | C4 | automated test | | open |
+| REQ-1-3 | C4 | automated test | test/unit/mcp.test.mjs: the REQ-1-3 tests (initialize, tools/list names, result shape, errors); test/integration/tools.test.mjs: "REQ-1-3 REQ-1-9: tools/list on staging names exactly the read tools". The read calls are covered here; action and draft arrive in C5 | partial: completes in C5 |
+| REQ-1-4 | C4 | automated test | test/unit/mcp.test.mjs: the three "REQ-18-3 REQ-1-4" schema tests. action and draft schemas arrive in C5 | partial: completes in C5 |
+| REQ-1-5 | C4 | automated test | test/unit/mcp.test.mjs: "REQ-1-3 REQ-1-5: the read tools the skills call are listed under Spark's names", "REQ-1-5: a tool's parameters are enforced, so an unknown one is an error and not ignored". The action and draft tools arrive in C5 | partial: completes in C5 |
 | REQ-1-6 | C5 | automated test | | open |
 | REQ-1-7 | C5 | automated test | | open |
 | REQ-1-8 | C5 | automated test | | open |
-| REQ-1-9 | C4 | automated test | | open |
-| REQ-1-10 | C4 | automated test | | open |
+| REQ-1-9 | C4 | automated test | test/unit/mcp.test.mjs: "REQ-1-9: no Spark-only tool exists: exactly the six read tools are listed"; test/integration/tools.test.mjs: "REQ-1-3 REQ-1-9: tools/list on staging names exactly the read tools". C5 widens the list by action and draft only | built |
+| REQ-1-10 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-1-10: the registry refuses Gmail, and folder addresses, search and IDs refuse sreasinger@gmail.com" | built |
 | REQ-1-11 | C5 | automated test | | open |
 | REQ-1-12 | C6 | automated test | | open |
 | REQ-2-1 | C2 | automated test | test/unit/accounts.test.mjs: "REQ-2-1: three mailboxes on two hosts with three logins" | built |
@@ -34,7 +34,7 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 | REQ-2-16 | C6 | README check | | open |
 | REQ-2-17 | C0 | manual (Scott) | Manual: in the Cloudflare dashboard, Scott confirms the Worker account is owned by scott@reasinger.net (subdomain reasinger-ops), has 2FA on, and is separate from the sreasinger@gmail.com and scott@yourcigardenindy.com accounts. docs/prerequisites.md records owner and 2FA as done, not the separation. | verified by Scott 2026-11-02 |
 | REQ-2-18 | C0 | manual (Scott) | Manual: Scott confirms the spike account (scott@reasinger.net, reasinger-ops) is the dedicated production account. docs/prerequisites.md records it as done. wrangler.toml configures Workers only; no other platform exists in the repo. | verified by Scott 2026-11-02 |
-| REQ-2-19 | C2 | automated test | test/unit/accounts.test.mjs: "REQ-2-19: the registry, translator, codec and IMAP client exist; OAuth and tools arrive later", "REQ-2-19: findAccount refuses an unknown account". The OAuth provider arrives in C6 and the tool layer in C4 and C5 | partial: completes in C4 to C6 |
+| REQ-2-19 | C2 | automated test | test/unit/accounts.test.mjs: "REQ-2-19: the registry, translator, codec and IMAP client exist; OAuth and tools arrive later", "REQ-2-19: findAccount refuses an unknown account". test/unit/mcp.test.mjs: "REQ-2-19: the Worker now has the Spark-compatible tool layer, and it refuses an ID for an unserved account"; test/unit/thread.test.mjs: "REQ-12-11 REQ-2-19: a malformed ID is refused, and a hand-built ID for an unserved account never reaches IMAP". The read tools arrived in C4; action and draft arrive in C5 and the OAuth provider in C6 | partial: completes in C5 and C6 |
 | REQ-2-20 | C0 | doc check | Doc check: docs/prerequisites.md row "Workers Paid plan on that account" records the recommended plan as active (Done 2026-11-02); README "Hosting" states it. CI has no bundle size gate. | built |
 | REQ-3-1 | C6 | automated test | | open |
 | REQ-3-2 | C6 | automated test | | open |
@@ -70,38 +70,38 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 | REQ-5-8 | C2 | automated test | test/unit/folders.test.mjs: "REQ-5-8: Trash and Junk are addressable logical names". Use in emails and search arrives in C4 | built |
 | REQ-5-9 | C2 | automated test | test/unit/folders.test.mjs: "REQ-5-9: a missing Archive is an error, while the other folders still resolve", "REQ-5-9: the server has no way to create a folder" | built |
 | REQ-5-10 | C2 | automated test | test/unit/folders.test.mjs: "REQ-5-10: Archive is INBOX.Archive with \Archive on the recorded cPanel A and cPanel B lists"; test/integration/folders-filters.test.mjs: "REQ-5-10 REQ-14-4: Archive exists with \Archive on <host>" | built |
-| REQ-6-1 | C4 | automated test | | open |
-| REQ-6-2 | C4 | automated test | | open |
-| REQ-6-3 | C4 | automated test | | open |
-| REQ-6-4 | C4 | automated test | | open |
-| REQ-6-5 | C4 | automated test | | open |
-| REQ-6-6 | C4 | automated test | | open |
-| REQ-6-7 | C4 | automated test | | open |
-| REQ-6-8 | C4 | automated test | | open |
-| REQ-6-9 | C4 | automated test | | open |
-| REQ-6-10 | C4 | automated test | | open |
-| REQ-6-11 | C4 | automated test | | open |
-| REQ-6-12 | C4 | automated test | | open |
-| REQ-6-13 | C4 | automated test | | open |
-| REQ-6-14 | C4 | automated test | | open |
-| REQ-6-15 | C4 | automated test | | open |
-| REQ-6-16 | C4 | automated test | | open |
-| REQ-6-17 | C4 | automated test | | open |
-| REQ-6-18 | C4 | automated test | | open |
-| REQ-6-19 | C4 | automated test | | open |
-| REQ-6-20 | C4 | automated test | | open |
-| REQ-6-21 | C4 | automated test | | open |
-| REQ-6-22 | C4 | automated test | | open |
-| REQ-6-23 | C4 | automated test | | open |
-| REQ-6-24 | C4 | automated test | | open |
-| REQ-6-25 | C4 | automated test | | open |
-| REQ-6-26 | C4 | automated test | | open |
-| REQ-6-27 | C4 | automated test | | open |
-| REQ-6-28 | C4 | automated test | | open |
-| REQ-6-29 | C4 | automated test | | open |
-| REQ-6-30 | C4 | automated test | | open |
-| REQ-6-31 | C4 | automated test | | open |
-| REQ-6-32 | C4 | automated test | | open |
+| REQ-6-1 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-1: every tool's response states which accounts were reached, including refusals", "REQ-6-1 REQ-12-1 REQ-18-4: search with one host down returns the other host's results and names who was missed"; test/integration/tools.test.mjs: "REQ-6-1 REQ-12-2: with <account> on a bad host, availability and folders still answer for <other>" | built |
+| REQ-6-2 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-16 REQ-6-2: each message has ID, account, from, to, subject, date, snippet and flags, and no more", "REQ-6-2: every search result names its account"; test/unit/thread.test.mjs: "REQ-6-2: every thread message names its account and has the usual message fields" | built |
+| REQ-6-3 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-3: an ID's account comes from the ID, and a supplied account that differs is an error"; test/unit/thread.test.mjs: "REQ-12-11 REQ-2-19: a malformed ID is refused, and a hand-built ID for an unserved account never reaches IMAP". The check is accountForId in src/message-id.js, which C5's reply, forward, edit and delete call | built |
+| REQ-6-4 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-4: accounts lists the configured accounts from static config and logs in to nothing", "REQ-6-4 REQ-6-1: accounts states it reached nothing, because it contacted nothing"; test/integration/tools.test.mjs: "REQ-6-4: accounts on staging lists both test mailboxes from config" | built |
+| REQ-6-5 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-5 REQ-6-6 REQ-6-7: availability checks every account through SELECT INBOX, grouped by host", "REQ-6-5: emails makes no availability check of its own: it never touches another account" | built |
+| REQ-6-6 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-5 REQ-6-6 REQ-6-7: availability checks every account through SELECT INBOX, grouped by host"; test/integration/tools.test.mjs: "REQ-6-7 REQ-6-6: availability reaches both test mailboxes through SELECT INBOX, grouped by host" | built |
+| REQ-6-7 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-5 REQ-6-6 REQ-6-7: availability checks every account through SELECT INBOX, grouped by host", "REQ-6-7 REQ-19-2: availability says which step failed for a bad login and for a failed SELECT"; test/integration/tools.test.mjs: "REQ-6-7 REQ-6-6: availability reaches both test mailboxes through SELECT INBOX, grouped by host" | built |
+| REQ-6-8 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-8 REQ-12-1: as a preflight, availability names the unreached accounts and answers for the rest" | built |
+| REQ-6-9 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-9: folders lists each account's folders with the logical-name mapping"; test/integration/tools.test.mjs: "REQ-6-9: folders maps every logical name on both test mailboxes" | built |
+| REQ-6-10 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-10: emails lists a logical folder and accepts folder, filter, page_size, page and order together"; test/integration/tools.test.mjs: "REQ-6-10 REQ-6-13 REQ-6-16: emails lists <account> on <host> newest first with every field" | built |
+| REQ-6-11 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-11: page is a 1-based number and each page continues the last"; test/integration/tools.test.mjs: "REQ-6-11 REQ-6-14: emails pages <account> with has_more until no pages remain" | built |
+| REQ-6-12 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-12: page_size defaults to 50, 100 is honored in one page, and above 100 is an error" | built |
+| REQ-6-13 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-13: order defaults to descending by date, not by arrival, and asc reverses it"; test/integration/imap.test.mjs: "REQ-6-13: UID SORT on <host> orders by Date header, whatever order the UIDs arrived in" | built |
+| REQ-6-14 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-14 REQ-18-4: every emails response carries a more-pages flag"; test/integration/tools.test.mjs: "REQ-6-11 REQ-6-14: emails pages <account> with has_more until no pages remain" | built |
+| REQ-6-15 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-15: without a date token emails has no lookback and sends no date key" | built |
+| REQ-6-16 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-16 REQ-6-2: each message has ID, account, from, to, subject, date, snippet and flags, and no more", and the other REQ-6-16 tests; test/integration/tools.test.mjs: "REQ-6-10 REQ-6-13 REQ-6-16: emails lists <account> on <host> newest first with every field" | built |
+| REQ-6-17 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-17: flags include \Flagged, so callers can skip pinned messages" | built |
+| REQ-6-18 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-18: flags include \Answered, the already-replied signal" | built |
+| REQ-6-19 | C4 | automated test | test/unit/tools-read.test.mjs: the three REQ-6-19 tests; test/integration/tools.test.mjs: "REQ-6-19: emails on <account> takes a snippet from real mail without marking it read" | built |
+| REQ-6-20 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-20: a multipart/report snippet starts with Final-Recipient and Diagnostic-Code"; test/integration/imap.test.mjs: "REQ-6-20: a real delivery report on <host> has a snippet led by its delivery status" | built |
+| REQ-6-21 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-21: search runs a free-text query in one account plus an optional filter"; test/integration/tools.test.mjs: "REQ-6-21 REQ-6-22: search finds a real message in <account> by a word of its subject" | built |
+| REQ-6-22 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-22: in takes an account or <account>:<Folder>, and omitted means all accounts"; test/integration/tools.test.mjs: "REQ-6-21 REQ-6-22: search finds a real message in <account> by a word of its subject" | built |
+| REQ-6-23 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-23 REQ-5-8: search covers all folders except Trash and Junk, and those two are reachable by name"; test/integration/tools.test.mjs: "REQ-6-23 REQ-18-5: search with no scope reaches both test mailboxes, at most 20 results, newest first" | built |
+| REQ-6-24 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-24: query words are ORed TEXT terms, and a filter-looking word is searched as written" | built |
+| REQ-6-25 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-25: filter tokens stay ANDed with each other and with the query", "REQ-6-25: non-ASCII query words reach the server as UTF-8" | built |
+| REQ-6-26 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-26 REQ-18-5: search merges newest first across accounts and folders and caps at 20 in total" | built |
+| REQ-6-27 | C4 | automated test | test/unit/thread.test.mjs: "REQ-6-27: thread returns the message and its thread, with bodies as text", and the other REQ-6-27 tests; test/integration/tools.test.mjs: "REQ-6-27 REQ-6-31: thread on <account> returns a real message with its body as text, oldest first" | built |
+| REQ-6-28 | C4 | automated test | test/unit/thread.test.mjs: the two REQ-6-28 tests | built |
+| REQ-6-29 | C4 | automated test | test/unit/thread.test.mjs: the three REQ-6-29 tests | built |
+| REQ-6-30 | C4 | automated test | test/unit/thread.test.mjs: the REQ-6-30 tests. The account's own address and the 60-day reference point follow the default in spec question Q7 | built, Q7 open |
+| REQ-6-31 | C4 | automated test | test/unit/thread.test.mjs: "REQ-6-31 REQ-18-9: thread messages are ordered by date, oldest first, whatever folder they sit in"; test/integration/tools.test.mjs: "REQ-6-27 REQ-6-31: thread on <account> returns a real message with its body as text, oldest first" | built |
+| REQ-6-32 | C4 | automated test | test/unit/thread.test.mjs: "REQ-6-32: bodies include delivery-status text and the embedded original's four headers, not its body"; test/integration/imap.test.mjs: "REQ-6-32: a real delivery report on <host> gives the status and embedded headers, not the embedded body" | built |
 | REQ-6-33 | C5 | automated test | | open |
 | REQ-6-34 | C5 | automated test | | open |
 | REQ-6-35 | C5 | automated test | | open |
@@ -177,8 +177,8 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 | REQ-11-2 | C3 | automated test | test/unit/headers.test.mjs: "REQ-11-2: Re: is built from the decoded subject and added only when absent", "REQ-11-2: Fwd: is built from the decoded subject" | built |
 | REQ-11-3 | C3 | automated test | test/unit/headers.test.mjs: the REQ-11-3 tests; test/unit/mime-build.test.mjs: "REQ-11-3 REQ-14-15: the built message carries the re-encoded subject in pure ASCII" | built |
 | REQ-11-4 | C3 | automated test | test/unit/headers.test.mjs: the REQ-11-4 tests; test/unit/mime-build.test.mjs: "REQ-11-4: the built message sets In-Reply-To and folded References", "REQ-11-4: a new draft has no threading headers". Thread reconstruction (REQ-6-28 to REQ-6-32) has its own rows in C4 | built |
-| REQ-12-1 | C4 | automated test | | open |
-| REQ-12-2 | C4 | automated test | | open |
+| REQ-12-1 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-1 REQ-12-1 REQ-18-4: search with one host down returns the other host's results and names who was missed", "REQ-12-1 REQ-18-4: when every account fails the result is a tool error and still names them"; test/integration/tools.test.mjs: "REQ-12-1 REQ-12-2: with <account> on a bad host, search still returns <other> and names the failure" | built |
+| REQ-12-2 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-12-2: one account's failed login fails only that account, even on a shared host", "REQ-12-2 REQ-4-9: a silent host fails only its accounts when the command times out"; test/unit/thread.test.mjs: "REQ-12-2: thread on an unreachable account fails with that account named"; test/integration/tools.test.mjs: the three forced-failure tests | built |
 | REQ-12-3 | C1 | automated test | test/unit/imap-sessions.test.mjs: "REQ-4-12 REQ-12-3 REQ-14-7: auth failure disables the account for the request, names the secret, never retries" and the other REQ-12-3 tests | built |
 | REQ-12-4 | SKILL | skill review | | open |
 | REQ-12-5 | SKILL | skill review | | open |
@@ -187,7 +187,7 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 | REQ-12-8 | SKILL | skill review | | open |
 | REQ-12-9 | SKILL | skill review | | open |
 | REQ-12-10 | SKILL | skill review | | open |
-| REQ-12-11 | C4 | automated test | | open |
+| REQ-12-11 | C4 | automated test | test/unit/tools-read.test.mjs: the REQ-12-11 tests for missing Archive, ambiguous folder, unknown filter token and account mismatch; test/unit/thread.test.mjs: the REQ-12-11 tests for not-found, ambiguous and malformed IDs. Forward without to, unset signature, refused move target and refused delete arrive with the write tools in C5 | partial: completes in C5 |
 | REQ-13-1 | C6 | automated test | | open |
 | REQ-13-2 | C6 | automated test | | open |
 | REQ-13-3 | C6 | automated test | | open |
@@ -269,19 +269,19 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 | REQ-16-40 | C7 | doc check | | open |
 | REQ-18-1 | C2 | automated test | test/unit/filter.test.mjs: "REQ-7-1 REQ-18-1: each token in the table translates to its IMAP key", "REQ-18-1: the token keys are exact: other cases and empty values are errors"; test/integration/folders-filters.test.mjs: per-host filter test | built |
 | REQ-18-2 | C6 | automated test | | open |
-| REQ-18-3 | C4 | automated test | | open |
-| REQ-18-4 | C4 | automated test | | open |
-| REQ-18-5 | C4 | automated test | | open |
+| REQ-18-3 | C4 | automated test | test/unit/mcp.test.mjs: the three "REQ-18-3 REQ-1-4" schema tests for emails, search and thread. action and draft schemas arrive in C5 | partial: completes in C5 |
+| REQ-18-4 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-14 REQ-18-4: every emails response carries a more-pages flag", "REQ-6-1 REQ-12-1 REQ-18-4: search with one host down returns the other host's results and names who was missed", "REQ-12-1 REQ-18-4: when every account fails the result is a tool error and still names them". Per-ID action results and the draft edit warning arrive in C5 | partial: completes in C5 |
+| REQ-18-5 | C4 | automated test | test/unit/tools-read.test.mjs: "REQ-6-26 REQ-18-5: search merges newest first across accounts and folders and caps at 20 in total", "REQ-18-5: search takes no page, and returns the same fields as emails"; test/integration/tools.test.mjs: "REQ-6-23 REQ-18-5: search with no scope reaches both test mailboxes, at most 20 results, newest first" | built |
 | REQ-18-6 | C5 | automated test | | open |
 | REQ-18-7 | C5 | automated test | | open |
 | REQ-18-8 | C3 | automated test | test/unit/mime-build.test.mjs: the REQ-18-8 tests cover CommonMark parsing and the multipart message. The quote format (second sentence) is NOT built: Spark's format is not recorded anywhere, see spec question Q4 | partial: quote format blocked on Q4 |
-| REQ-18-9 | C4 | automated test | | open |
+| REQ-18-9 | C4 | automated test | test/unit/thread.test.mjs: "REQ-6-31 REQ-18-9: thread messages are ordered by date, oldest first, whatever folder they sit in" | built |
 | REQ-18-10 | SKILL | skill review | | open |
 | REQ-18-11 | SKILL | skill review | | open |
 | REQ-18-12 | C6 | automated test | | open |
 | REQ-18-13 | C6 | manual (Scott) | | open |
 | REQ-19-1 | C2 | automated test | test/unit/folders.test.mjs: "REQ-5-4 REQ-19-1: several folders with one flag is an error asking for an override (spec question Q2)" | built |
-| REQ-19-2 | C4 | automated test | | open |
+| REQ-19-2 | C4 | automated test | test/unit/imap-sessions.test.mjs: the three REQ-19-2 tests; test/unit/tools-read.test.mjs: "REQ-6-7 REQ-19-2: availability says which step failed for a bad login and for a failed SELECT" | built |
 | REQ-19-3 | C5 | automated test | | open |
 | REQ-19-4 | C5 | automated test | | open |
 | REQ-19-5 | C5 | automated test | | open |

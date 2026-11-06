@@ -170,6 +170,34 @@ function threadChunks(node) {
 // Subject and Date headers of an embedded original.
 export const threadBody = (node) => threadChunks(node).filter(Boolean).join("\n\n");
 
+const THREAD_TEXT_TYPES = ["text/plain", "text/html", "message/delivery-status"];
+
+// The BODY sections threadBody reads from a BODYSTRUCTURE, so attachments are never fetched.
+export function threadSections(structure) {
+  if (structure.disposition?.type === "attachment") return [];
+  if (structure.parts) return structure.parts.flatMap(threadSections);
+  const type = `${structure.type}/${structure.subtype}`;
+  if (type === "message/rfc822") return [`${structure.part}.HEADER`];
+  return THREAD_TEXT_TYPES.includes(type) ? [structure.part] : [];
+}
+
+// The node tree threadBody takes, built from a BODYSTRUCTURE and the sections threadSections named.
+export function nodeFromStructure(structure, sections) {
+  const multipart = structure.type === "multipart";
+  const type = `${structure.type}/${structure.subtype}`;
+  const header = sections[`${structure.part}.HEADER`];
+  return {
+    headers: {},
+    type,
+    params: structure.params,
+    encoding: structure.encoding ?? "7bit",
+    disposition: structure.disposition?.type ?? "inline",
+    body: multipart ? "" : asBinary(sections[structure.part] ?? ""),
+    parts: multipart ? structure.parts.map((part) => nodeFromStructure(part, sections)) : [],
+    message: type === "message/rfc822" && header ? parseMessage(header) : null,
+  };
+}
+
 // The Final-Recipient and Diagnostic-Code fields of a delivery-status part's text, in order.
 export function deliveryStatusSummary(text) {
   const unfolded = text.replace(/\r?\n(?=[ \t])/g, "");

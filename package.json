@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test --test-timeout=20000 \"test/unit/**/*.test.mjs\"",
-    "test:integration": "node --test --test-timeout=20000 \"test/integration/**/*.test.mjs\"",
+    "test:integration": "node --test --test-concurrency=1 --test-timeout=60000 \"test/integration/**/*.test.mjs\"",
     "trace": "node scripts/trace.mjs",
     "check": "wrangler deploy --env staging --dry-run --outdir dist",
     "deploy:staging": "node scripts/wrangler.mjs deploy --env staging",

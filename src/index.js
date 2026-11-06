@@ -1,6 +1,17 @@
-// Skeleton: no product behavior. Staging answers the integration harness behind the temporary
-// STAGING_TOKEN bearer (removed in C6). Every other request gets 401.
+// The MCP endpoint is /mcp. Until OAuth arrives in C6, everything sits behind the temporary
+// STAGING_TOKEN bearer on staging, and every other request gets 401.
+import { handleMcp } from "./mcp.js";
 import { imapCheck } from "./staging-imap.js";
+
+const loadConnect = async () => (await import("./imap/cloudflare.js")).connect;
+
+// Staging only, removed with STAGING_TOKEN in C6: the integration suite names one account in this
+// header to give it a host that cannot resolve, which proves the other account still answers.
+function stagingRegistry(request, env) {
+  const broken = request.headers.get("x-staging-break-host");
+  if (env.ENVIRONMENT !== "staging" || !broken) return env.MAILBOXES;
+  return env.MAILBOXES.map((entry) => (entry.id === broken ? { ...entry, host: "unreachable.invalid" } : entry));
+}
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -26,10 +37,9 @@ async function stagingAuthorized(request, env) {
 export default {
   async fetch(request, env) {
     if (!(await stagingAuthorized(request, env))) return json({ error: "unauthorized" }, 401);
-    if (new URL(request.url).pathname === "/imap-check") {
-      const { connect } = await import("./imap/cloudflare.js");
-      return json(await imapCheck(env, connect));
-    }
+    const { pathname } = new URL(request.url);
+    if (pathname === "/mcp") return handleMcp(request, { env, loadConnect, registry: stagingRegistry(request, env) });
+    if (pathname === "/imap-check") return json(await imapCheck(env, await loadConnect()));
     return json({
       environment: env.ENVIRONMENT,
       mailboxes: env.MAILBOXES.map(({ id, host }) => ({ id, host })),

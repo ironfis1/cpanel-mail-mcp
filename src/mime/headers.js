@@ -138,6 +138,13 @@ export function encodeSubject(subject) {
 export const replySubject = (decoded) => (/^\s*re:/i.test(decoded) ? decoded : `Re: ${decoded}`);
 export const forwardSubject = (decoded) => `Fwd: ${decoded}`;
 
+// The subject thread matching compares: Re:, Fwd: and Fw: stripped repeatedly, case-insensitive.
+export function normalizeSubject(decoded) {
+  let subject = decoded.trim();
+  for (let next; (next = subject.replace(/^(?:re|fwd|fw):\s*/i, "")) !== subject; ) subject = next;
+  return subject;
+}
+
 // Splits a raw address header on top-level commas, keeping quotes, comments and <...> whole.
 function addressEntries(value) {
   const entries = [];
