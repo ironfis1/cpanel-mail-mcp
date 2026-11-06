@@ -15,6 +15,7 @@ Cloudflare Worker remote MCP server for IMAP access to Scott's three cPanel busi
 - Never decide a spec question. Log it in `docs/build/spec-questions.md`, skip that item, list it in the PR.
 - Never edit `docs/spec.md`, `docs/rule-base.md`, `docs/ambiguity-log.md` or `docs/design.md` from a chunk.
 - Every test name starts with the REQ IDs it verifies. Keep `docs/build/traceability.md` current.
+- Integration test harness retries: a network error with no response from staging (ECONNRESET, socket hang up, fetch failed before any HTTP status) may be retried once, and only for read calls (`accounts`, `availability`, `folders`, `emails`, `search`, `thread`, `/imap-check`). Never retry a write call (any C5 tool that creates, changes, moves, sends or deletes), even on a network error: a reset can arrive after the server already acted. Never retry on an HTTP status or an MCP error; those are results. Never add retries in server code.
 
 ## Environment
 
