@@ -188,19 +188,22 @@ async function check(client) {
 
 // Staging diagnostic for design risk R2 (docs/design.md): the cPanel hosts may refuse logins from
 // some Cloudflare egress IPs. Opens a socket the same way the IMAP client does and asks an IP echo
-// service which address it came from. Returns the address, or null on any failure or after 5 s.
-// The egress address can differ between connections, so this is evidence, not proof.
+// service which address it came from. Workers sockets cannot reach Cloudflare-hosted addresses, so
+// the first service is AWS's checkip, which is not behind Cloudflare. Returns the address, or
+// "unavailable: <reason per service>" so a missing reading explains itself. The egress address can
+// differ between connections, so this is evidence, not proof.
 const IP = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f]{0,4}(?::[0-9a-f]{0,4}){2,7})$/i;
+export const ECHO_SERVICES = ["checkip.amazonaws.com", "api.ipify.org"];
 
-export async function egressIp(connect, { timeoutMs = 5000 } = {}) {
+async function askEcho(connect, hostname, timeoutMs) {
   let socket;
   let timer;
   try {
-    socket = connect({ hostname: "api.ipify.org", port: 443 }, { secureTransport: "on", allowHalfOpen: false });
+    socket = connect({ hostname, port: 443 }, { secureTransport: "on", allowHalfOpen: false });
     const work = (async () => {
       const writer = socket.writable.getWriter();
       await writer.write(
-        new TextEncoder().encode("GET / HTTP/1.1\r\nHost: api.ipify.org\r\nUser-Agent: cpanel-mail-mcp-staging\r\nConnection: close\r\n\r\n"),
+        new TextEncoder().encode(`GET / HTTP/1.1\r\nHost: ${hostname}\r\nUser-Agent: cpanel-mail-mcp-staging\r\nConnection: close\r\n\r\n`),
       );
       writer.releaseLock();
       const reader = socket.readable.getReader();
@@ -211,15 +214,17 @@ export async function egressIp(connect, { timeoutMs = 5000 } = {}) {
         if (done) break;
         text += decoder.decode(value, { stream: true });
       }
+      const status = /^HTTP\/\S+ (\d{3})/.exec(text)?.[1] ?? "no status";
       const body = text.split("\r\n\r\n").slice(1).join("\r\n\r\n");
-      return body.split(/\s+/).find((line) => IP.test(line)) ?? null;
+      const ip = body.split(/\s+/).find((line) => IP.test(line));
+      return ip ? { ip } : { reason: text ? `HTTP ${status}, no address` : "empty reply" };
     })();
     const timeout = new Promise((resolve) => {
-      timer = setTimeout(() => resolve(null), timeoutMs);
+      timer = setTimeout(() => resolve({ reason: `no reply in ${timeoutMs} ms` }), timeoutMs);
     });
-    return await Promise.race([work.catch(() => null), timeout]);
-  } catch {
-    return null;
+    return await Promise.race([work.catch((error) => ({ reason: String(error?.message ?? error).slice(0, 120) })), timeout]);
+  } catch (error) {
+    return { reason: String(error?.message ?? error).slice(0, 120) };
   } finally {
     clearTimeout(timer);
     try {
@@ -228,6 +233,16 @@ export async function egressIp(connect, { timeoutMs = 5000 } = {}) {
       // Nothing to do; the address is already read or given up on.
     }
   }
+}
+
+export async function egressIp(connect, { timeoutMs = 5000, services = ECHO_SERVICES } = {}) {
+  const reasons = [];
+  for (const hostname of services) {
+    const { ip, reason } = await askEcho(connect, hostname, timeoutMs);
+    if (ip) return ip;
+    reasons.push(`${hostname}: ${reason}`);
+  }
+  return `unavailable: ${reasons.join("; ")}`;
 }
 
 // Same entries as RequestSessions.runEach, plus R2 evidence: the egress address seen just before
