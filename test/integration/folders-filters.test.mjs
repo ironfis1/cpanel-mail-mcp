@@ -12,7 +12,11 @@ const resultFor = async (id) => {
   });
   const result = (await checked).find((r) => r.id === id);
   assert.ok(result, `no result for ${id}`);
-  assert.equal(result.ok, true, `${id}: ${result.code}: ${result.error}`);
+  assert.equal(
+    result.ok,
+    true,
+    `${id}: ${result.code}: ${result.error} [server: ${result.server_text}; egress before ${result.egress_ip}, after ${result.egress_ip_after}]`,
+  );
   return result.value;
 };
 

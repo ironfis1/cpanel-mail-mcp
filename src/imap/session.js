@@ -34,9 +34,14 @@ async function openSession(connect, account, password) {
   }
 }
 
-const authFailure = (account, step) =>
+// raw is the client's refusal, if there was one. Its server text stays in serverText, never in the
+// message, so only the staging imap-check diagnostic reads it.
+const authFailure = (account, step, raw = null) =>
   Object.assign(
-    new ImapError("auth", `IMAP authentication failed for ${account.id}: check the ${account.secret_ref} secret. Not retried.`),
+    new ImapError("auth", `IMAP authentication failed for ${account.id}: check the ${account.secret_ref} secret. Not retried.`, {
+      status: raw?.status ?? null,
+      serverText: raw?.serverText ?? null,
+    }),
     { step },
   );
 
@@ -76,7 +81,7 @@ export class RequestSessions {
       this.#sessions.set(account.id, client);
       return client;
     } catch (raw) {
-      const error = raw.code === "auth" ? authFailure(account, raw.step) : raw;
+      const error = raw.code === "auth" ? authFailure(account, raw.step, raw) : raw;
       this.#failed.set(account.id, error);
       throw error;
     }

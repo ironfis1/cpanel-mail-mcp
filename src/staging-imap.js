@@ -186,13 +186,81 @@ async function check(client) {
   };
 }
 
-export async function imapCheck(env, connect) {
+// Staging diagnostic for design risk R2 (docs/design.md): the cPanel hosts may refuse logins from
+// some Cloudflare egress IPs. Opens a socket the same way the IMAP client does and asks an IP echo
+// service which address it came from. Returns the address, or null on any failure or after 5 s.
+// The egress address can differ between connections, so this is evidence, not proof.
+const IP = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f]{0,4}(?::[0-9a-f]{0,4}){2,7})$/i;
+
+export async function egressIp(connect, { timeoutMs = 5000 } = {}) {
+  let socket;
+  let timer;
+  try {
+    socket = connect({ hostname: "api.ipify.org", port: 443 }, { secureTransport: "on", allowHalfOpen: false });
+    const work = (async () => {
+      const writer = socket.writable.getWriter();
+      await writer.write(
+        new TextEncoder().encode("GET / HTTP/1.1\r\nHost: api.ipify.org\r\nUser-Agent: cpanel-mail-mcp-staging\r\nConnection: close\r\n\r\n"),
+      );
+      writer.releaseLock();
+      const reader = socket.readable.getReader();
+      const decoder = new TextDecoder();
+      let text = "";
+      while (text.length < 8192) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+      }
+      const body = text.split("\r\n\r\n").slice(1).join("\r\n\r\n");
+      return body.split(/\s+/).find((line) => IP.test(line)) ?? null;
+    })();
+    const timeout = new Promise((resolve) => {
+      timer = setTimeout(() => resolve(null), timeoutMs);
+    });
+    return await Promise.race([work.catch(() => null), timeout]);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+    try {
+      await socket?.close();
+    } catch {
+      // Nothing to do; the address is already read or given up on.
+    }
+  }
+}
+
+// Same entries as RequestSessions.runEach, plus R2 evidence: the egress address seen just before
+// the account's session opened, and for a failed account the address seen just after and the
+// server's own refusal text. The extra fields exist only on this staging endpoint.
+export async function imapCheck(env, connect, { egress = () => egressIp(connect) } = {}) {
   for (const { id } of env.MAILBOXES) {
     if (!id.startsWith("mcptest@")) throw new Error("imap-check runs on test mailboxes only");
   }
+  const accounts = loadRegistry(env.MAILBOXES);
+  const before = await Promise.all(accounts.map(() => egress()));
   const sessions = new RequestSessions({ connect, env });
   try {
-    return await sessions.runEach(loadRegistry(env.MAILBOXES), check);
+    const results = await sessions.runEach(accounts, check);
+    const errors = new Map();
+    await Promise.all(
+      accounts.map((account) =>
+        sessions.run(account, () => null).catch((error) => errors.set(account.id, error)),
+      ),
+    );
+    return await Promise.all(
+      results.map(async (result, i) => {
+        if (result.ok) return { ...result, egress_ip: before[i] };
+        const error = errors.get(result.id);
+        return {
+          ...result,
+          egress_ip: before[i],
+          egress_ip_after: await egress(),
+          server_text: error?.serverText ?? null,
+          response_status: error?.status ?? null,
+        };
+      }),
+    );
   } finally {
     await sessions.closeAll();
   }

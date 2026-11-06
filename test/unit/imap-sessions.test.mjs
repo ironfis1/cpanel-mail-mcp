@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { RequestSessions } from "../../src/imap/session.js";
-import { imapCheck } from "../../src/staging-imap.js";
+import { egressIp, imapCheck } from "../../src/staging-imap.js";
 import worker from "../../src/index.js";
 import { account, FAKE_PASSWORD, fakeServer } from "../helpers/fake-imap.mjs";
 
@@ -228,4 +228,60 @@ test("REQ-14-2: imap-check is closed to a missing token and in production", asyn
   assert.equal((await call({ ENVIRONMENT: "staging", STAGING_TOKEN: "t", MAILBOXES })).status, 401);
   const production = { ENVIRONMENT: "production", STAGING_TOKEN: "t", MAILBOXES };
   assert.equal((await call(production, { authorization: "Bearer t" })).status, 401);
+});
+
+const testMailbox = (id, host) => ({ ...account(id, host), signature: "", folders: {} });
+
+test("REQ-14-2 REQ-4-12: imap-check reports a refused login with the server's text and the egress address, without a second login", async () => {
+  const srv = fakeServer();
+  const MAILBOXES = [testMailbox("mcptest@one.test", "one.test")];
+  const seen = ["203.0.113.7", "203.0.113.8"];
+  const egress = async () => seen.shift();
+  const [result] = await imapCheck({ IMAP_PASS_TEST: "wrong-secret-value", MAILBOXES }, srv.connect, { egress });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, "auth");
+  assert.equal(result.egress_ip, "203.0.113.7");
+  assert.equal(result.egress_ip_after, "203.0.113.8");
+  assert.equal(result.server_text, "NO [AUTHENTICATIONFAILED] Authentication failed.");
+  assert.equal(result.response_status, "NO");
+  assert.ok(!JSON.stringify(result).includes("wrong-secret-value"));
+  assert.equal(srv.commands.filter((c) => c.startsWith("AUTHENTICATE")).length, 1, "no second login");
+});
+
+test("REQ-14-2: imap-check records the egress address for an account that logs in, with one login", async () => {
+  const srv = fakeServer();
+  const MAILBOXES = [testMailbox("mcptest@one.test", "one.test")];
+  const [result] = await imapCheck({ ...env, MAILBOXES }, srv.connect, { egress: async () => "198.51.100.4" });
+  assert.equal(result.egress_ip, "198.51.100.4");
+  assert.notEqual(result.code, "auth");
+  assert.equal(srv.commands.filter((c) => c.startsWith("AUTHENTICATE")).length, 1, "one login for the whole check");
+});
+
+const httpConnect = (reply) => (address, options) => {
+  const calls = (httpConnect.calls ??= []);
+  calls.push({ address, options });
+  return {
+    readable: new ReadableStream({
+      start(controller) {
+        if (reply !== null) controller.enqueue(new TextEncoder().encode(reply));
+        if (reply !== null) controller.close();
+      },
+    }),
+    writable: new WritableStream(),
+    close: async () => {},
+  };
+};
+
+test("REQ-14-2: egressIp reads the address from the echo service over TLS, and gives null for anything else", async () => {
+  httpConnect.calls = [];
+  const ok = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\n104.28.1.200";
+  assert.equal(await egressIp(httpConnect(ok)), "104.28.1.200");
+  assert.deepEqual(httpConnect.calls[0], {
+    address: { hostname: "api.ipify.org", port: 443 },
+    options: { secureTransport: "on", allowHalfOpen: false },
+  });
+  assert.equal(await egressIp(httpConnect("HTTP/1.1 200 OK\r\n\r\n2a06:98c0:3600::103")), "2a06:98c0:3600::103");
+  assert.equal(await egressIp(httpConnect("HTTP/1.1 503 Busy\r\n\r\n<html>busy</html>")), null);
+  assert.equal(await egressIp(() => { throw new Error("refused"); }), null);
+  assert.equal(await egressIp(httpConnect(null), { timeoutMs: 20 }), null, "a silent service times out");
 });
