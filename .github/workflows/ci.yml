@@ -68,7 +68,7 @@ jobs:
       - if: steps.gate.outputs.deploy == 'true'
         run: npm ci
       - if: steps.gate.outputs.deploy == 'true'
-        run: npx wrangler deploy --env staging
+        run: npm run deploy:staging -- --label ci
       - name: Note skipped integration suite
         if: steps.gate.outputs.deploy == 'true' && steps.gate.outputs.token != 'true'
         run: |

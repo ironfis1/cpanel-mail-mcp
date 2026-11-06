@@ -90,6 +90,8 @@ npm run wrangler -- whoami          # must list only the scott@reasinger.net acc
 npm run deploy:staging
 ```
 
+`deploy:staging` labels the deploy with the git short SHA and this computer's name (`--message "<sha> <hostname>"`), so the Cloudflare dashboard shows what was deployed and from where. CI deploys with the label `<sha> ci`.
+
 ## Set secrets
 
 Enter values only at the `wrangler secret put` prompt. Never put them in a file in this repo, on a command line or in a log.
@@ -106,7 +108,7 @@ GitHub repo secrets (Settings, Secrets and variables, Actions):
 
 | Secret | Used for |
 |---|---|
-| `CLOUDFLARE_API_TOKEN` | Staging deploy. Workers Scripts: Edit, on the scott@reasinger.net account only. |
+| `CLOUDFLARE_API_TOKEN` | Staging deploy. The `cpanel-mail-mcp-ci` API token: Workers Scripts: Edit, on the scott@reasinger.net account only. CI has its own token; the desktop and laptop tokens are never used here. |
 | `CLOUDFLARE_ACCOUNT_ID` | Selects that account. |
 | `STAGING_TOKEN` | Same value as the staging Worker secret, so CI can call the Worker. |
 
