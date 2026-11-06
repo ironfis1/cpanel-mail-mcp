@@ -225,10 +225,11 @@ export class ImapClient {
       if (error.code !== "command") throw error;
       const responseCode = /^\S+ \[([A-Za-z0-9._-]+)/.exec(error.serverText)?.[1].toUpperCase();
       if (!responseCode || responseCode === "AUTHENTICATIONFAILED") {
-        throw new ImapError("auth", "IMAP authentication failed", { status: error.status });
+        throw new ImapError("auth", "IMAP authentication failed", { status: error.status, serverText: error.serverText });
       }
       throw new ImapError("connection", `IMAP login refused with server response code ${responseCode}. Not retried.`, {
         status: error.status,
+        serverText: error.serverText,
         responseCode,
       });
     }

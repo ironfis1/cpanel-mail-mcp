@@ -8,14 +8,24 @@ let checked;
 const imapCheck = () => {
   checked ??= callStaging("/imap-check").then(async (response) => {
     assert.equal(response.status, 200);
-    return response.json();
+    const results = await response.json();
+    // R2 evidence for every account, passing or not, so failing and passing egress addresses can be compared.
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      const lines = results.map((r) => `- ${r.id}: ${r.ok ? "ok" : `${r.code} (${r.server_text})`}, egress ${r.egress_ip}${r.ok ? "" : ` then ${r.egress_ip_after}`}`);
+      appendFileSync(process.env.GITHUB_STEP_SUMMARY, `imap-check egress:\n\n${lines.join("\n")}\n\n`);
+    }
+    return results;
   });
   return checked;
 };
 const resultFor = async (id) => {
   const result = (await imapCheck()).find((r) => r.id === id);
   assert.ok(result, `no result for ${id}`);
-  assert.equal(result.ok, true, `${id}: ${result.code}: ${result.error}`);
+  assert.equal(
+    result.ok,
+    true,
+    `${id}: ${result.code}: ${result.error} [server: ${result.server_text}; egress before ${result.egress_ip}, after ${result.egress_ip_after}]`,
+  );
   return result.value;
 };
 
