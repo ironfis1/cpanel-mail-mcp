@@ -50,3 +50,45 @@ Question: The subject fallback joins a message with "a shared participant within
 Options: (a) The account's own address does not count, and the 60 days run from any member with that subject. (b) The account's own address does not count, and the 60 days run from the requested message only. (c) The account's own address counts, and the 60 days run from any member.
 Blocking: no. Until answered the builder takes (a). Leaving the account's own address out can only keep a message out of a thread, never join an unrelated one, and the acceptance comparison with Spark (REQ-15-7) will show if it keeps too much out. Running the 60 days from any member lets a slow exchange stay whole. One test pins each half, so a different answer is a small change.
 Resolution:
+
+## Q8 (C5)
+REQ: REQ-18-3, REQ-18-6, REQ-6-34
+Question: REQ-18-3 says `action` must match the recorded Spark schema, but docs/proposed-resolutions.md records only `action_name` and `message_ids`. Nothing names the `move` target parameter.
+Options: (a) `folder`, as `emails` uses. (b) Read Spark's live action schema (schema only, no call) and copy its name.
+Blocking: yes for `move`.
+Resolution: Scott chose (b), 2026-11-06. Spark's live `action` schema, read as schema only, names the parameter `folder` on its folder-move action, with an account-qualified value such as `user@example.com:Archive`. Recorded as REQ-19-6 in spec v1.6. Spark names that action `moveToFolder`; the server keeps `move` per REQ-6-34, since no skill calls it.
+
+## Q9 (C5)
+REQ: REQ-6-35, REQ-6-36, REQ-18-6
+Question: REQ-6-35 allows mixed accounts, but a move target belongs to one account. Is an ID from another account a per-ID error or does the whole call fail? Is archiving a message already in Archive, or moving one to the folder it is in, a no-op success or a per-ID error?
+Options: Cross-account: (a) per-ID error, (b) whole call fails. Already there: (a) no-op success, (b) per-ID error.
+Blocking: no.
+Resolution: Scott chose per-ID error for a cross-account ID and no-op success for an already-placed message, reported with status `already_in_folder`, 2026-11-06. Recorded as REQ-19-7 and REQ-19-8 in spec v1.6.
+
+## Q10 (C5)
+REQ: REQ-9-25, REQ-10-8
+Question: Does an edit with a new body keep the quoted original? Q5 does not settle it.
+Options: (a) The new body replaces only the new text; signature and quote stay. (b) The quote is dropped.
+Blocking: no.
+Resolution: Scott chose (a), 2026-11-06. Recorded as REQ-19-9 in spec v1.6.
+
+## Q11 (C5)
+REQ: REQ-9-17, REQ-9-18, REQ-9-25
+Question: REQ-9-17 bans a subject override only when creating a reply. The spec says nothing about forwards or about editing a reply or forward draft.
+Options: (a) Refuse on reply and forward creation and on edits of any threaded draft. (b) Refuse only on reply creation. (c) Refuse on reply and forward creation; edits accept it.
+Blocking: no.
+Resolution: Scott chose a fourth reading, 2026-11-06: refuse on reply creation and on edits of reply drafts; forwards accept a subject at creation and on edit. A changed reply subject breaks threading whether set at creation or by edit; a forward starts a new conversation. Forwards also carry In-Reply-To (spark-forward.eml), so a reply draft on edit is one with In-Reply-To and a current subject starting "Re:", which REQ-9-16 and REQ-9-17 guarantee. Recorded as REQ-19-10 in spec v1.6.
+
+## Q12 (C5)
+REQ: REQ-19-3, REQ-7-5
+Question: Which time zone does the reply attribution date use? The sample's -0500 could be the original's own offset or America/Indianapolis.
+Options: (a) America/Indianapolis. (b) The original's own offset.
+Blocking: no.
+Resolution: Scott chose (a), 2026-11-06, as an IANA zone so daylight time shows -0400; the forward Date line uses the same rule. Recorded as REQ-19-11 in spec v1.6.
+
+## Q13 (C5)
+REQ: REQ-6-38
+Question: REQ-6-38 restricts only targets. Are Trash, Junk and Drafts allowed as move and archive sources?
+Options: (a) No source restriction. (b) Refuse all three as sources.
+Blocking: no.
+Resolution: Scott chose: Trash and Junk are allowed as sources (restore and not-spam are legitimate); Drafts is refused as a source, because a draft moved out of Drafts is orphaned from the draft tools. 2026-11-06. Recorded as REQ-19-12 in spec v1.6.

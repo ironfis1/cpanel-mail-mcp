@@ -1,6 +1,6 @@
 # Traceability matrix
 
-Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk. Claude Code fills the "Verified by" column with the test file and test name (or the manual check) as it builds. A chunk gate cannot pass while any of its rows is blank.
+Every requirement in docs/spec.md (tag spec-v1.6) is owned by exactly one chunk. Claude Code fills the "Verified by" column with the test file and test name (or the manual check) as it builds. A chunk gate cannot pass while any of its rows is blank.
 
 | REQ | Chunk | Method | Verified by | Status |
 |---|---|---|---|---|
@@ -285,3 +285,10 @@ Every requirement in docs/spec.md (tag spec-v1.5) is owned by exactly one chunk.
 | REQ-19-3 | C5 | automated test | | open |
 | REQ-19-4 | C5 | automated test | | open |
 | REQ-19-5 | C5 | automated test | | open |
+| REQ-19-6 | C5 | automated test | | open |
+| REQ-19-7 | C5 | automated test | | open |
+| REQ-19-8 | C5 | automated test | | open |
+| REQ-19-9 | C5 | automated test | | open |
+| REQ-19-10 | C5 | automated test | | open |
+| REQ-19-11 | C5 | automated test | | open |
+| REQ-19-12 | C5 | automated test | | open |
